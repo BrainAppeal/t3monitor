@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<T3locallang>
+	<meta type="array">
+		<type>database</type>
+		<description>Language labels for 'met_t3monitor' extension config </description>
+	</meta>
+	<data type="array">
+		<languageKey index="default" type="array">
+			<label index="secret_key">Access key: Access key to communicate with the TYPO3 Monitor plugin</label>
+			<label index="encryptionkey">Encryption key: Key to encode the TYPO3 Monitor plugin output.</label>
+			<label index="exclude_local">Exclude extensions: List of local extensions to be excluded from TYPO3 Monitor plugin. (All system extensions are excluded automatically)</label>
+		</languageKey>
+
+		<languageKey index="de" type="array">
+			<label index="secret_key">Access Key: Zugriffsschlüssel für die Kommunikation mit dem TYPO3 Monitor Plugin.</label>
+			<label index="encryptionkey">Encryption Key: Code für die Verschlüsselung der übertragenen Daten.</label>
+			<label index="exclude_local">Extensions ausschliessen: Liste lokaler Extensions die vom TYPO3 Monitor plugin ignoriert werden sollen. (Alle System-Extensions werden automatisch ignoriert</label>
+		</languageKey>
+
+	</data>
+</T3locallang>
