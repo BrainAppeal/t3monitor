@@ -70,4 +70,3 @@ class Tx_MetT3monitor_Reports_SysLog extends Tx_MetT3monitor_Reports_Abstract
         $reportHandler->add('sys_log', $info);
     }
 }
-?>

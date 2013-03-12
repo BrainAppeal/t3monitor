@@ -85,4 +85,3 @@ class Tx_MetT3monitor_Reports_Reports
         return $this->data;
     }
 }
-?>

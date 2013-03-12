@@ -106,4 +106,3 @@ class Tx_MetT3monitor_Reports_Server extends Tx_MetT3monitor_Reports_Abstract
         $reportHandler->add('reports', $info);
     }
 }
-?>

@@ -14,7 +14,7 @@
 		<languageKey index="de" type="array">
 			<label index="secret_key">Access Key: Zugriffsschlüssel für die Kommunikation mit dem TYPO3 Monitor Plugin.</label>
 			<label index="encryptionkey">Encryption Key: Code für die Verschlüsselung der übertragenen Daten.</label>
-			<label index="exclude_local">Extensions ausschliessen: Liste lokaler Extensions die vom TYPO3 Monitor plugin ignoriert werden sollen. (Alle System-Extensions werden automatisch ignoriert</label>
+			<label index="exclude_local">Extensions ausschliessen: Liste lokaler Extensions die vom TYPO3 Monitor plugin ignoriert werden sollen. (Alle System-Extensions werden automatisch ingoriert.)</label>
 		</languageKey>
 
 	</data>

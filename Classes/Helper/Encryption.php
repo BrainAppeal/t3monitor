@@ -86,4 +86,3 @@ class Tx_MetT3monitor_Helper_Encryption
         return $dcrStr;
     }
 }
-?>

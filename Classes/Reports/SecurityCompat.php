@@ -346,4 +346,3 @@ class Tx_MetT3monitor_Reports_SecurityCompat extends Tx_MetT3monitor_Reports_Sec
         return $info;
     }
 }
-?>

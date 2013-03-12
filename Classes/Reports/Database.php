@@ -82,4 +82,3 @@ class Tx_MetT3monitor_Reports_Database extends Tx_MetT3monitor_Reports_Abstract
         $reportHandler->add('reports', $info);
     }
 }
-?>

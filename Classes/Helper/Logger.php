@@ -159,4 +159,3 @@ class Tx_MetT3monitor_Helper_Logger
         $this->writeLogToFile();
     }
 }
-?>

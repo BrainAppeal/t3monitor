@@ -85,4 +85,3 @@ class Tx_MetT3monitor_Helper_Timer
         return $summary;
     }
 }
-?>

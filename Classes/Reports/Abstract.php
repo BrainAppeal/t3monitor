@@ -75,4 +75,3 @@ abstract class Tx_MetT3monitor_Reports_Abstract
      */
     public abstract function addReports(Tx_MetT3monitor_Reports_Reports $reportHandler);
 }
-?>

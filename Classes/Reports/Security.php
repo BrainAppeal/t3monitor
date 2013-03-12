@@ -181,4 +181,3 @@ class Tx_MetT3monitor_Reports_Security extends Tx_MetT3monitor_Reports_Abstract
         return $autoloads;
     }
 }
-?>

@@ -219,4 +219,3 @@ if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/met_t3m
 }
 $WDOG = t3lib_div::makeInstance('Tx_MetT3monitor_Service_Dispatcher');
 $WDOG->run();
-?>

@@ -202,4 +202,3 @@ class Tx_MetT3monitor_Helper_Database
         return $GLOBALS['TYPO3_DB']->fullQuoteStr($string, $table);
     }
 }
-?>

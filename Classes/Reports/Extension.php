@@ -210,4 +210,3 @@ class Tx_MetT3monitor_Reports_Extension extends Tx_MetT3monitor_Reports_Abstract
         return $affectedFiles;
     }
 }
-?>

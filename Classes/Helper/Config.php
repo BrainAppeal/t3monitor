@@ -226,4 +226,3 @@ class Tx_MetT3monitor_Helper_Config
         $this->logfilePath = $logfilePath;
     }
 }
-?>
