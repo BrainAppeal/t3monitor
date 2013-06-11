@@ -2,7 +2,7 @@
 /* * *************************************************************
  *  Copyright notice
  *
- *  (c) 2011 METEOS Deutschland (info@meteos.de)
+ *  (c) 2013 Brain Appeal GmbH (info@brain-appeal.com)
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -34,15 +34,15 @@ require_once 'Security.php';
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_MetT3monitor_Reports_SecurityCompat extends Tx_MetT3monitor_Reports_Security
+class Tx_Brainmonitor_Reports_SecurityCompat extends Tx_Brainmonitor_Reports_Security
 {
 
     /**
      * Returns the system status reports
      *
-     * @param Tx_MetT3monitor_Reports_Reports $reportHandler
+     * @param Tx_Brainmonitor_Reports_Reports $reportHandler
      */
-    public function addReports(Tx_MetT3monitor_Reports_Reports $reportHandler)
+    public function addReports(Tx_Brainmonitor_Reports_Reports $reportHandler)
     {
         $reportsInfo = array();
         $reportsInfo = $this->getReportsFromExt();
@@ -265,7 +265,7 @@ class Tx_MetT3monitor_Reports_SecurityCompat extends Tx_MetT3monitor_Reports_Sec
     {
         $severity = self::OK;
         $value = 'OK';
-        $db = Tx_MetT3monitor_Helper_Database::getInstance();
+        $db = Tx_Brainmonitor_Helper_Database::getInstance();
         $where = 'username = ' . $db->fullQuoteStr('admin', 'be_users')
             . ' AND password = ' . $db->fullQuoteStr(md5('password'), 'be_users')
             . ' AND deleted = 0';

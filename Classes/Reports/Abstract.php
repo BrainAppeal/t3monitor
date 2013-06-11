@@ -2,7 +2,7 @@
 /* * *************************************************************
  *  Copyright notice
  *
- *  (c) 2011 METEOS Deutschland (info@meteos.de)
+ *  (c) 2013 Brain Appeal GmbH (info@brain-appeal.com)
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -33,7 +33,7 @@
  *
  * @see tx_reports_reports_Status
  */
-abstract class Tx_MetT3monitor_Reports_Abstract
+abstract class Tx_Brainmonitor_Reports_Abstract
 {
     //Constants copied from tx_reports_reports_Status
     const NOTICE = -2;
@@ -44,14 +44,14 @@ abstract class Tx_MetT3monitor_Reports_Abstract
     /**
      * Configuration object
      *
-     * @var Tx_MetT3monitor_Helper_Config
+     * @var Tx_Brainmonitor_Helper_Config
      */
     private $config;
 
     /**
      * Asdsign configuration instance
      *
-     * @param Tx_MetT3monitor_Helper_Config $config
+     * @param Tx_Brainmonitor_Helper_Config $config
      */
     public function setConfig($config)
     {
@@ -61,7 +61,7 @@ abstract class Tx_MetT3monitor_Reports_Abstract
     /**
      * Returns configuration instance
      *
-     * @return Tx_MetT3monitor_Helper_Config
+     * @return Tx_Brainmonitor_Helper_Config
      */
     protected function getConfig()
     {
@@ -71,7 +71,7 @@ abstract class Tx_MetT3monitor_Reports_Abstract
     /**
      * Adds the reports of this class to the report handler
      *
-     * @param Tx_MetT3monitor_Reports_Reports $reportHandler
+     * @param Tx_Brainmonitor_Reports_Reports $reportHandler
      */
-    public abstract function addReports(Tx_MetT3monitor_Reports_Reports $reportHandler);
+    public abstract function addReports(Tx_Brainmonitor_Reports_Reports $reportHandler);
 }

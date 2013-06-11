@@ -2,7 +2,7 @@
 /* * *************************************************************
  *  Copyright notice
  *
- *  (c) 2011 METEOS Deutschland (info@meteos.de)
+ *  (c) 2013 Brain Appeal GmbH (info@brain-appeal.com)
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -25,7 +25,7 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
-$tmpExtPath = t3lib_extMgm::extPath('met_t3monitor');
+$tmpExtPath = t3lib_extMgm::extPath('brainmonitor');
 require_once $tmpExtPath . 'Classes/Helper/Config.php';
 require_once $tmpExtPath . 'Classes/Helper/Database.php';
 require_once $tmpExtPath . 'Classes/Helper/Encryption.php';
@@ -46,7 +46,7 @@ require_once $tmpExtPath . 'Classes/Reports/SysLog.php';
  * @package T3Monitor
  * @subpackage Service
  */
-class Tx_MetT3monitor_Service_Dispatcher
+class Tx_Brainmonitor_Service_Dispatcher
 {
 
     /**
@@ -54,11 +54,11 @@ class Tx_MetT3monitor_Service_Dispatcher
      *
      * @var string
      */
-    private $extKey = 'met_t3monitor';
+    private $extKey = 'brainmonitor';
     /**
      * Configuration object
      *
-     * @var Tx_MetT3monitor_Helper_Config
+     * @var Tx_Brainmonitor_Helper_Config
      */
     private $config;
 
@@ -78,7 +78,7 @@ class Tx_MetT3monitor_Service_Dispatcher
         // Config
         $extConfig = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
 
-        $this->config = new Tx_MetT3monitor_Helper_Config();
+        $this->config = new Tx_Brainmonitor_Helper_Config();
         $this->config->setSecretKey($extConfig['secret_key']);
         $this->config->setEncryptionkey($extConfig['encryptionkey']);
         $this->config->setLogfilePath('');
@@ -99,14 +99,14 @@ class Tx_MetT3monitor_Service_Dispatcher
     public function run()
     {
         $logFile = $this->config->getLogfilePath();
-        $logger = new Tx_MetT3monitor_Helper_Logger($logFile);
+        $logger = new Tx_Brainmonitor_Helper_Logger($logFile);
         $activateLogging = $this->config->getActivateLogging();
         $logger->setEnabled($activateLogging);
 
         $secret = isset($_GET['secret']) ? $_GET['secret'] : '';
         $this->confirmKeysOrDie($secret, $logger);
 
-        $db = Tx_MetT3monitor_Helper_Database::getInstance();
+        $db = Tx_Brainmonitor_Helper_Database::getInstance();
         if(!$db->isConnected()){
             die('ERROR: The current username, password or host was not '
                 . 'accepted when the connection to the database was '
@@ -119,7 +119,7 @@ class Tx_MetT3monitor_Service_Dispatcher
         }
 
         // PARSE TIME BEGIN
-        $timer = new Tx_MetT3monitor_Helper_Timer();
+        $timer = new Tx_Brainmonitor_Helper_Timer();
         $timer->start('main');
         // write Logfile
         $logger->log('TYPO3 Monitor called by IP: ' . $_SERVER['REMOTE_ADDR']);
@@ -133,18 +133,18 @@ class Tx_MetT3monitor_Service_Dispatcher
         $this->config->setMinTstamp($lastCheck);
 
         $reports = array(
-            'security' => 'Tx_MetT3monitor_Reports_SecurityCompat',
-            'installed_extensions' => 'Tx_MetT3monitor_Reports_Extension',
-            'database' => 'Tx_MetT3monitor_Reports_Database',
-            'sys_log' => 'Tx_MetT3monitor_Reports_SysLog',
-            'system' => 'Tx_MetT3monitor_Reports_Server',
-            'disc' => 'Tx_MetT3monitor_Reports_Disc',
+            'security' => 'Tx_Brainmonitor_Reports_SecurityCompat',
+            'installed_extensions' => 'Tx_Brainmonitor_Reports_Extension',
+            'database' => 'Tx_Brainmonitor_Reports_Database',
+            'sys_log' => 'Tx_Brainmonitor_Reports_SysLog',
+            'system' => 'Tx_Brainmonitor_Reports_Server',
+            'disc' => 'Tx_Brainmonitor_Reports_Disc',
         );
         $enabledReports = array();
         if(isset($_GET['reports'])) {
             $enabledReports = explode(',', trim(strip_tags($_GET['reports'])));
         }
-        $reportHandler = new Tx_MetT3monitor_Reports_Reports();
+        $reportHandler = new Tx_Brainmonitor_Reports_Reports();
         foreach($reports as $key => $className){
             if(in_array($key, $enabledReports)){
                 $timer->start($key);
@@ -172,7 +172,7 @@ class Tx_MetT3monitor_Service_Dispatcher
      * If not the dispatcher is stopped immediately and an error message is send
      *
      * @param string $key The required secret key
-     * @param Tx_MetT3monitor_Helper_Logger $logger Logging instance
+     * @param Tx_Brainmonitor_Helper_Logger $logger Logging instance
      */
     private function confirmKeysOrDie($key, $logger)
     {
@@ -206,7 +206,7 @@ class Tx_MetT3monitor_Service_Dispatcher
     private function sendOutputAsXmlData(array $data)
     {
         $xml = t3lib_div::array2xml($data, '', 0, 'xml');
-        $crypt = new Tx_MetT3monitor_Helper_Encryption();
+        $crypt = new Tx_Brainmonitor_Helper_Encryption();
         $encKey = $this->config->getEncryptionkey();
         $encStr = $crypt->encrypt($encKey, $xml);
         header('Content-type: text/plain; charset=utf-8');
@@ -214,8 +214,8 @@ class Tx_MetT3monitor_Service_Dispatcher
         exit();
     }
 }
-if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/met_t3monitor/Classes/Service/Dispatcher.php']) {
-    include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/met_t3monitor/Classes/Service/Dispatcher.php']);
+if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/brainmonitor/Classes/Service/Dispatcher.php']) {
+    include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/brainmonitor/Classes/Service/Dispatcher.php']);
 }
-$WDOG = t3lib_div::makeInstance('Tx_MetT3monitor_Service_Dispatcher');
+$WDOG = t3lib_div::makeInstance('Tx_Brainmonitor_Service_Dispatcher');
 $WDOG->run();

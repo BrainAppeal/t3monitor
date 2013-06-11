@@ -2,7 +2,7 @@
 /* * *************************************************************
  *  Copyright notice
  *
- *  (c) 2011 METEOS Deutschland (info@meteos.de)
+ *  (c) 2013 Brain Appeal GmbH (info@brain-appeal.com)
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -32,12 +32,12 @@
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_MetT3monitor_Helper_Database
+class Tx_Brainmonitor_Helper_Database
 {
     /**
      * Singleton instance
      *
-     * @var Tx_MetT3monitor_Helper_Database
+     * @var Tx_Brainmonitor_Helper_Database
      */
     private static $_instance = null;
     /**
@@ -70,14 +70,14 @@ class Tx_MetT3monitor_Helper_Database
     /**
      * (Static) function that returns the Singleton instance of this class.
      *
-     * Usage: $db = Tx_MetT3monitor_Helper_Database::getInstance();
+     * Usage: $db = Tx_Brainmonitor_Helper_Database::getInstance();
      *
-     * @return Tx_MetT3monitor_Helper_Database The class instance (Singleton)
+     * @return Tx_Brainmonitor_Helper_Database The class instance (Singleton)
      */
     public function getInstance()
     {
         if (self::$_instance == null) {
-            self::$_instance = new Tx_MetT3monitor_Helper_Database();
+            self::$_instance = new Tx_Brainmonitor_Helper_Database();
         }
         return self::$_instance;
     }

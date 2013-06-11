@@ -2,7 +2,7 @@
 /* * *************************************************************
  *  Copyright notice
  *
- *  (c) 2011 METEOS Deutschland (info@meteos.de)
+ *  (c) 2013 Brain Appeal GmbH (info@brain-appeal.com)
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -31,7 +31,7 @@
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_MetT3monitor_Helper_Config
+class Tx_Brainmonitor_Helper_Config
 {
     /**
      * The secret authentication key; required to run the dispatcher

@@ -2,7 +2,7 @@
 /* * *************************************************************
  *  Copyright notice
  *
- *  (c) 2011 METEOS Deutschland (info@meteos.de)
+ *  (c) 2013 Brain Appeal GmbH (info@brain-appeal.com)
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -33,7 +33,7 @@ require_once(PATH_t3lib . 'class.t3lib_install.php');
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_MetT3monitor_Reports_Extension extends Tx_MetT3monitor_Reports_Abstract
+class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
 {
 
     /**
@@ -103,10 +103,10 @@ class Tx_MetT3monitor_Reports_Extension extends Tx_MetT3monitor_Reports_Abstract
     /**
      * Get reports for extensions that are installed in typo3conf/ext (local)
      *
-     * @param Tx_MetT3monitor_Reports_Reports $reportHandler
+     * @param Tx_Brainmonitor_Reports_Reports $reportHandler
      * @throws Exception
      */
-    public function addReports(Tx_MetT3monitor_Reports_Reports $reportHandler)
+    public function addReports(Tx_Brainmonitor_Reports_Reports $reportHandler)
     {
         global $TYPO3_LOADED_EXT;
         $loadedExtensions = & $TYPO3_LOADED_EXT;

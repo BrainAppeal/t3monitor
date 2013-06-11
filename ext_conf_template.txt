@@ -1,9 +1,9 @@
-# cat=basic/enable/100; type=string; label=LLL:EXT:met_t3monitor/Resources/Private/Language/locallang_be.xml:secret_key
+# cat=basic/enable/100; type=string; label=LLL:EXT:brainmonitor/Resources/Private/Language/locallang_be.xml:secret_key
 secret_key =
 
-# cat=basic/enable/101; type=string; label=LLL:EXT:met_t3monitor/Resources/Private/Language/locallang_be.xml:encryptionkey
+# cat=basic/enable/101; type=string; label=LLL:EXT:brainmonitor/Resources/Private/Language/locallang_be.xml:encryptionkey
 encryptionkey =
 
-# cat=basic/enable/102; type=string; label=LLL:EXT:met_t3monitor/Resources/Private/Language/locallang_be.xml:exclude_local
+# cat=basic/enable/102; type=string; label=LLL:EXT:brainmonitor/Resources/Private/Language/locallang_be.xml:exclude_local
 exclude_local =
 

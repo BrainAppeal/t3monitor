@@ -2,7 +2,7 @@
 /* * *************************************************************
  *  Copyright notice
  *
- *  (c) 2011 METEOS Deutschland (info@meteos.de)
+ *  (c) 2013 Brain Appeal GmbH (info@brain-appeal.com)
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -32,17 +32,17 @@
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_MetT3monitor_Reports_SysLog extends Tx_MetT3monitor_Reports_Abstract
+class Tx_Brainmonitor_Reports_SysLog extends Tx_Brainmonitor_Reports_Abstract
 {
     /**
      * Returns informations about the database tables
      *
-     * @param Tx_MetT3monitor_Reports_Reports $reportHandler
+     * @param Tx_Brainmonitor_Reports_Reports $reportHandler
      */
-    public function addReports(Tx_MetT3monitor_Reports_Reports $reportHandler)
+    public function addReports(Tx_Brainmonitor_Reports_Reports $reportHandler)
     {
         $info = array();
-        $db = Tx_MetT3monitor_Helper_Database::getInstance();
+        $db = Tx_Brainmonitor_Helper_Database::getInstance();
         $config = $this->getConfig();
         $minTstamp = (int) $config->getMinTstamp();
         $limit = '';
