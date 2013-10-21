@@ -39,7 +39,7 @@ class Tx_Brainmonitor_Service_Compatibility implements t3lib_Singleton {
 	protected $llxmlParser;
 
 	/**
-	 * @return tx_ttnews_compatibility
+	 * @return Tx_Brainmonitor_Service_Compatibility
 	 */
 	public static function getInstance() {
 		return self::makeInstance('Tx_Brainmonitor_Service_Compatibility');
@@ -50,7 +50,7 @@ class Tx_Brainmonitor_Service_Compatibility implements t3lib_Singleton {
 	 */
 	public function __construct() {
 		if (class_exists('t3lib_utility_VersionNumber')) {
-			if (tx_ttnews_compatibility::int_from_ver(TYPO3_version) >= 6000000) {
+			if (Tx_Brainmonitor_Service_Compatibility::int_from_ver(TYPO3_version) >= 6000000) {
 				$this->isVersion6 = TRUE;
 			}
 		}
@@ -120,7 +120,7 @@ class Tx_Brainmonitor_Service_Compatibility implements t3lib_Singleton {
 	 */
 	protected function getLlxmlParser() {
 		if (!isset($this->llxmlParser)) {
-			$this->llxmlParser = self::makeInstance('t3lib_l10n_parser_Llxml');
+			$this->llxmlParser = t3lib_div::makeInstance('t3lib_l10n_parser_Llxml');
 		}
 		return $this->llxmlParser;
 	}
