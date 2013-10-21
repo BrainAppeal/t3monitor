@@ -55,9 +55,19 @@ class Tx_Brainmonitor_Helper_Database
     }
     private function init()
     {
-        $isGte43 = t3lib_div::int_from_ver(TYPO3_version) >= t3lib_div::int_from_ver('4.3.0');
+        $comp = Tx_Brainmonitor_Service_Compatibility::getInstance();
+        $t3ver = $comp->int_from_ver(TYPO3_version);
+        if ($t3ver >= 6000000) {
+            // Starting from TYPO3 6.1, the database will connect itself when
+            // needed
+            if ($t3ver < 6001000) {
+                require_once \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('frontend')
+                    . 'Classes/Utility/EidUtility.php';
+                \TYPO3\CMS\Frontend\Utility\EidUtility::connectDB();
+            }
+            $this->isConnected = true;
         // >= TYPO3 4.3
-        if($isGte43){
+        } elseif($t3ver >= 4003000){
             $this->isConnected = tslib_eidtools::connectDB();
         // <= TYPO3 4.2
         } else {

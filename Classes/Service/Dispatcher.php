@@ -39,6 +39,7 @@ require_once $tmpExtPath . 'Classes/Reports/Extension.php';
 require_once $tmpExtPath . 'Classes/Reports/SecurityCompat.php';
 require_once $tmpExtPath . 'Classes/Reports/Server.php';
 require_once $tmpExtPath . 'Classes/Reports/SysLog.php';
+require_once $tmpExtPath . 'Classes/Service/Compatibility.php';
 /**
  * Main service class which creates and sends reports for this TYPO3 installation
  *
@@ -88,9 +89,8 @@ class Tx_Brainmonitor_Service_Dispatcher
         if (!defined(PATH_typo3))
             define('PATH_typo3', PATH_site . TYPO3_mainDir);
         if (!is_object($GLOBALS['LANG'])) {
-            require_once(PATH_typo3.'sysext/lang/lang.php');
-            $GLOBALS['LANG'] = t3lib_div::makeInstance('language');
-            $GLOBALS['LANG']->init('en');
+            $comp = Tx_Brainmonitor_Service_Compatibility::getInstance();
+            $comp->initLang();
         }
     }
     /**
@@ -102,8 +102,9 @@ class Tx_Brainmonitor_Service_Dispatcher
         $logger = new Tx_Brainmonitor_Helper_Logger($logFile);
         $activateLogging = $this->config->getActivateLogging();
         $logger->setEnabled($activateLogging);
+        $params = $_GET;
 
-        $secret = isset($_GET['secret']) ? $_GET['secret'] : '';
+        $secret = isset($params['secret']) ? $params['secret'] : '';
         $this->confirmKeysOrDie($secret, $logger);
 
         $db = Tx_Brainmonitor_Helper_Database::getInstance();
@@ -113,7 +114,7 @@ class Tx_Brainmonitor_Service_Dispatcher
                 . 'attempted to be established!');
         }
 
-        $onlyCheckAccess = isset($_GET['only_check']) && $_GET['only_check'] == 1;
+        $onlyCheckAccess = isset($params['only_check']) && $params['only_check'] == 1;
         if($onlyCheckAccess){
             die('OK');
         }
@@ -124,10 +125,10 @@ class Tx_Brainmonitor_Service_Dispatcher
         // write Logfile
         $logger->log('TYPO3 Monitor called by IP: ' . $_SERVER['REMOTE_ADDR']);
 
-        $showExtendedReports = isset($_GET['extended']) && $_GET['extended'] == 1;
-        $showModifiedFiles = isset($_GET['changed_files']) && $_GET['changed_files'] == 1;
+        $showExtendedReports = isset($params['extended']) && $params['extended'] == 1;
+        $showModifiedFiles = isset($params['changed_files']) && $params['changed_files'] == 1;
         //Timestamp of last check
-        $lastCheck = isset($_GET['last_check']) ? (int) $_GET['last_check'] : 0;
+        $lastCheck = isset($params['last_check']) ? (int) $params['last_check'] : 0;
         $this->config->setShowExtendedReports($showExtendedReports);
         $this->config->setShowModifiedFiles($showModifiedFiles);
         $this->config->setMinTstamp($lastCheck);
@@ -141,14 +142,14 @@ class Tx_Brainmonitor_Service_Dispatcher
             'disc' => 'Tx_Brainmonitor_Reports_Disc',
         );
         $enabledReports = array();
-        if(isset($_GET['reports'])) {
-            $enabledReports = explode(',', trim(strip_tags($_GET['reports'])));
+        if(isset($params['reports'])) {
+            $enabledReports = explode(',', trim(strip_tags($params['reports'])));
         }
         $reportHandler = new Tx_Brainmonitor_Reports_Reports();
         foreach($reports as $key => $className){
             if(in_array($key, $enabledReports)){
                 $timer->start($key);
-                $reportObj = t3lib_div::makeInstance($className);
+                $reportObj = Tx_Brainmonitor_Service_Compatibility::makeInstance($className);
                 $reportObj->setConfig($this->config);
                 try {
                     $reportObj->addReports($reportHandler);
@@ -217,5 +218,5 @@ class Tx_Brainmonitor_Service_Dispatcher
 if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/brainmonitor/Classes/Service/Dispatcher.php']) {
     include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/brainmonitor/Classes/Service/Dispatcher.php']);
 }
-$WDOG = t3lib_div::makeInstance('Tx_Brainmonitor_Service_Dispatcher');
+$WDOG = Tx_Brainmonitor_Service_Compatibility::makeInstance('Tx_Brainmonitor_Service_Dispatcher');
 $WDOG->run();

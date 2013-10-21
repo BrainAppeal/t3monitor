@@ -51,13 +51,6 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
     private $emDetails;
 
     /**
-     * true if TYPO3 version is >= 4.5
-     *
-     * @var boolean
-     */
-    private $isVersion45;
-
-    /**
      * Default constructor
      */
     public function __construct()
@@ -70,9 +63,15 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
      */
     private function init()
     {
-        $this->isVersion45 = t3lib_div::int_from_ver(TYPO3_version) >= t3lib_div::int_from_ver('4.5.0');
-
-        if ($this->isVersion45) {
+        $comp = Tx_Brainmonitor_Service_Compatibility::getInstance();
+        $t3ver = $comp->int_from_ver(TYPO3_version);
+        if ($t3ver >= 6000000) {
+            // Starting from TYPO3 6.1, the database will connect itself when
+            // needed
+            if ($t3ver < 6001000) {
+                \TYPO3\CMS\Frontend\Utility\EidUtility::initTCA();
+            }
+        } elseif ($t3ver >= 4005000) {
             require_once(PATH_typo3 . '/sysext/em/classes/extensions/class.tx_em_extensions_list.php');
             require_once(PATH_typo3 . '/sysext/em/classes/extensions/class.tx_em_extensions_details.php');
             $this->emList = t3lib_div::makeInstance('tx_em_Extensions_List');
@@ -99,6 +98,24 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
             $this->emDetails = $this->emList;
         }
     }
+    private function getInstalledExtensions()
+    {
+        $extensions = null;
+        if ($this->emList !== null) {
+            $exts = $this->emList->getInstalledExtensions();
+            if (!$exts || !$exts[0]){
+                throw new Exception('ERROR: Extension list could not be loaded!');
+            }
+            $extensions = $exts[0];
+        } else {
+            $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Extbase\\Object\\ObjectManager');
+            /* @var $objectManager \TYPO3\CMS\Extbase\Object\ObjectManager */
+            $objectName = 'TYPO3\\CMS\\Extensionmanager\\Utility\\ListUtility';
+            $listUtility = $objectManager->get($objectName);
+            $extensions = $listUtility->getAvailableAndInstalledExtensionsWithAdditionalInformation();
+        }
+        return $extensions;
+    }
 
     /**
      * Get reports for extensions that are installed in typo3conf/ext (local)
@@ -110,20 +127,15 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
     {
         global $TYPO3_LOADED_EXT;
         $loadedExtensions = & $TYPO3_LOADED_EXT;
-
-        $exts = $this->emList->getInstalledExtensions();
-        if (!$exts || !$exts[0]){
-            throw new Exception('ERROR: Extension list could not be loaded!');
-        }
+        $extensions = $this->getInstalledExtensions();
         $config = $this->getConfig();
         $excludeList = $config->getExcludeExtList();
         $showModifiedFiles = $config->getShowModifiedFiles();
         $noExcludes = empty($excludeList);
 
-        // Generate output
-        $extensions = $exts[0];
         $extOutput = array();
         $extPath = PATH_site . 'typo3conf/ext/';
+        // Generate output
         foreach (array_keys($extensions) as $extKey) {
             //Only add info for installed extension in typo3conf/ext (L=local)
             //Skip all extensions in exclude list
@@ -132,7 +144,11 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
                 && ($noExcludes || !in_array($extKey, $excludeList))) {
 
                 $extInfo = $extensions[$extKey];
-                $emConf = $extensions[$extKey]['EM_CONF'];
+                $emConf = $extInfo;
+                // TYPO3 < 6
+                if (isset($emConf['EM_CONF'])) {
+                    $emConf = $emConf['EM_CONF'];
+                }
                 $extReport = array();
                 $extReport['ext'] = $extKey;
                 $extReport['title'] = $emConf['title'];
@@ -143,12 +159,16 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
                 $extReport['constraints'] = $emConf['constraints'];
                 $this->removeEmptyKeys($extReport['constraints']);
                 $iconFile = '';
-                if (in_array('ext_icon.gif', $extInfo['files'])) {
+                if (isset($extInfo['ext_icon'])) {
+                    $iconFile = $extInfo['ext_icon'];
+                } elseif (in_array('ext_icon.gif', $extInfo['files'])) {
                     $iconFile = 'ext_icon.gif';
                 }
                 $extReport['icon_file'] = $iconFile;
                 if ($showModifiedFiles) {
-                    $extReport['changed_files'] = $this->getExtModifiedFiles($extKey, $extInfo, $emConf);
+                    $extReport['changed_files'] = $this->getExtModifiedFiles(
+                        $extKey, $extInfo, $emConf
+                    );
                 }
                 //set name of log file if it exists;
                 //Required to create a link to the manual for custom extensions
@@ -179,7 +199,7 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
      *         ),
      *      ),
      * </pre>
-     * 
+     *
      * @param type $array
      */
     private function removeEmptyKeys(&$array){
@@ -194,19 +214,89 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
 
     private function getExtModifiedFiles($extKey, $extInfo, $emConf)
     {
-        $currentMd5Array = $this->emDetails->serverExtensionMD5array($extKey, $extInfo);
+        $currentMd5Array = $this->serverExtensionMD5array($extKey, $extInfo);
         $affectedFiles = array();
         if (strcmp($emConf['_md5_values_when_last_written'], serialize($currentMd5Array))) {
-
             $lastWritten = unserialize($emConf['_md5_values_when_last_written']);
-            if ($this->isVersion45)
-                $files = tx_em_Tools::findMD5ArrayDiff($currentMd5Array, $lastWritten);
-            else
-                $files = $this->emList->findMD5ArrayDiff($currentMd5Array, $lastWritten);
-
-            if (count($files))
+            $files = $this->findMD5ArrayDiff($currentMd5Array, $lastWritten);
+            if (count($files)) {
                 $affectedFiles = $files;
+            }
         }
+        return $affectedFiles;
+    }
+
+    /**
+     * Creates a MD5-hash array over the current files in the extension
+     *
+     * @param	string		Extension key
+     * @param	array		Extension information array
+     * @return	array		MD5-keys
+     */
+    private function serverExtensionMD5array($extKey, $conf) {
+        $md5Array = array();
+        // TYPO3 < 6
+        if ($this->emDetails !== null) {
+            $md5Array = $this->emDetails->serverExtensionMD5array($extKey, $conf);
+        // TYPO3 >= 6
+        } else {
+            // Creates upload-array - including filelist.
+            $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(
+                'TYPO3\\CMS\\Extbase\\Object\\ObjectManager'
+            );
+            /* @var $objectManager \TYPO3\CMS\Extbase\Object\ObjectManager */
+            $objectName = 'TYPO3\\CMS\\Extensionmanager\\Utility\\FileHandlingUtility';
+            /* @var $fileUtility \TYPO3\CMS\Extensionmanager\Utility\FileHandlingUtility */
+            $fileUtility = $objectManager->get($objectName);
+            $excludePattern = $GLOBALS['TYPO3_CONF_VARS']['EXT']['excludeForPackaging'];
+
+            $extensionPath = $fileUtility->getAbsoluteExtensionPath($extKey);
+            // Add trailing slash to the extension path, getAllFilesAndFoldersInPath explicitly requires that.
+            $extensionPath = \TYPO3\CMS\Core\Utility\PathUtility::sanitizeTrailingSeparator($extensionPath);
+            // Get all the files of the extension, but exclude the ones specified in the excludePattern
+            $files = \TYPO3\CMS\Core\Utility\GeneralUtility::getAllFilesAndFoldersInPath(
+                array(),	// No files pre-added
+                $extensionPath,	// Start from here
+                '',		// Do not filter files by extension
+                false,		// Include subdirectories
+                99,		// Recursion level
+                $excludePattern	// Files and directories to exclude.
+            );
+            // Make paths relative to extension root directory.
+            $relFiles = \TYPO3\CMS\Core\Utility\GeneralUtility::removePrefixPathFromList($files, $extensionPath);
+            $md5Array = array();
+            if (is_array($relFiles)) {
+                // Traverse files.
+                foreach ($relFiles as $relPath) {
+                    if ($relPath != 'ext_emconf.php') {
+                        $file = $extensionPath . $relPath;
+                        $contentMd5 = \TYPO3\CMS\Core\Utility\GeneralUtility::getUrl($file);
+                        $md5Array[$relPath] = substr(md5($contentMd5), 0, 4);
+                    }
+                }
+            }
+        }
+        return $md5Array;
+    }
+
+    /**
+     * Compares two arrays with MD5-hash values for analysis of which files has changed.
+     *
+     * @param	array		Current values
+     * @param	array		Past values
+     * @return	array		Affected files
+     */
+    private static function findMD5ArrayDiff($current, $past) {
+        if (!is_array($current)) {
+            $current = array();
+        }
+        if (!is_array($past)) {
+            $past = array();
+        }
+        $filesInCommon = array_intersect($current, $past);
+        $diff1 = array_keys(array_diff($past, $filesInCommon));
+        $diff2 = array_keys(array_diff($current, $filesInCommon));
+        $affectedFiles = array_unique(array_merge($diff1, $diff2));
         return $affectedFiles;
     }
 }

@@ -130,7 +130,7 @@ class Tx_Brainmonitor_Reports_Security extends Tx_Brainmonitor_Reports_Abstract
                 if ((strpos($lKey, 'tx_reports_reports_status_') !== false
                     && $lKey != 'tx_reports_reports_status_status')
                     || $lKey == 'tx_install_report_installstatus') {
-                    $statusProviderInstance = t3lib_div::makeInstance($key);
+                    $statusProviderInstance = Tx_Brainmonitor_Service_Compatibility::makeInstance($key);
                     if ($statusProviderInstance instanceof tx_reports_StatusProvider) {
                         $group = strtolower(str_replace(
                             array('tx_reports_reports_status_', 'tx_install_report', 'status'), '', $key
