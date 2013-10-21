@@ -143,6 +143,7 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
                 && $loadedExtensions[$extKey]['type'] == 'L'
                 && ($noExcludes || !in_array($extKey, $excludeList))) {
 
+                $absExtPath = $extPath . $extKey . '/';
                 $extInfo = $extensions[$extKey];
                 $emConf = $extInfo;
                 // TYPO3 < 6
@@ -157,6 +158,7 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
                 $extReport['description'] = $emConf['description'];
                 $extReport['version'] = $emConf['version'];
                 $extReport['constraints'] = $emConf['constraints'];
+                $extReport['installedBy'] = $this->findUserWhoInstalledExtension($absExtPath);
                 $this->removeEmptyKeys($extReport['constraints']);
                 $iconFile = '';
                 if (isset($extInfo['ext_icon'])) {
@@ -174,7 +176,7 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
                 //Required to create a link to the manual for custom extensions
                 //that are not in the TER
                 $docFile = '';
-                if(file_exists($extPath.$extKey.'/doc/manual.sxw')){
+                if(file_exists($absExtPath . 'doc/manual.sxw')){
                     $docFile = 'doc/manual.sxw';
                 }
                 $extReport['doc_file'] = $docFile;
@@ -183,6 +185,57 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
             }
         }
         $reportHandler->add('installed_extensions', $extOutput);
+    }
+    /**
+     * Find the user who most likely installed this extension. This cannot be
+     * determined with absolute certainty, because no log entry is created for
+     * this action. Instead, the function checks which users were logged in
+     * at the time the extension was installed.
+     *
+     * @param string $absExtPath Absolute path to extension
+     * @return string
+     */
+    private function findUserWhoInstalledExtension($absExtPath)
+    {
+        $userName = '';
+        if (is_dir($absExtPath)) {
+            $modTstamp = filemtime($absExtPath);
+            $minLoginTstamp = $modTstamp - 86400;
+            $select = 'userid, type, tstamp, action';
+            $from = 'sys_log';
+            $orderBy = 'tstamp DESC';
+            $where = 'type = 255 AND tstamp > ' . $minLoginTstamp
+                . ' AND tstamp < ' . $modTstamp;
+
+            $db = Tx_Brainmonitor_Helper_Database::getInstance();
+            $loginList = $db->fetchList($select, $from, $where, $orderBy);
+            krsort($loginList);
+            $userList = array();
+            foreach ($loginList as $row) {
+                $userId = $row['userid'];
+                $loggedIn = $row['action'] == 1;
+                $userList[$userId] = $loggedIn;
+            }
+            $beUsers = array();
+            $userCount = count($userList);
+            if ($userCount > 0) {
+                $userIds = array_keys($userList);
+                $select = 'uid, username, admin';
+                $from = 'be_users';
+                $orderBy = 'uid ASC';
+                $where = 'uid IN ('.implode(', ', $userIds).')';
+                // Add condition if more than one user was logged in
+                if ($userCount > 1) {
+                    $where .= ' AND admin = 1';
+                }
+                $beUsers = $db->fetchList($select, $from, $where, $orderBy);
+            }
+            foreach ($beUsers as $userRow) {
+                if (!empty($userName)) $userName .= ' OR ';
+                $userName .= $userRow['username'];
+            }
+        }
+        return $userName;
     }
     /**
      * Helper function to prevent errors in xml when configuration array
