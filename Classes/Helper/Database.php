@@ -46,6 +46,13 @@ class Tx_Brainmonitor_Helper_Database
      * @var boolean
      */
     private $isConnected;
+
+    /**
+     * List of tables with table information
+     *
+     * @var array
+     */
+    private $tableInfo;
     /**
      * Default constructor
      */
@@ -155,10 +162,16 @@ class Tx_Brainmonitor_Helper_Database
         return $row;
 
     }
+
+    /**
+     * @return array
+     */
     public function getTablesInfo()
     {
-        $tables = $GLOBALS['TYPO3_DB']->admin_get_tables();
-        return $tables;
+        if ($this->tableInfo === null) {
+            $this->tableInfo = $GLOBALS['TYPO3_DB']->admin_get_tables();
+        }
+        return $this->tableInfo;
     }
 
     /**
