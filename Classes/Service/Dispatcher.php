@@ -40,6 +40,7 @@ require_once $tmpExtPath . 'Classes/Reports/SecurityCompat.php';
 require_once $tmpExtPath . 'Classes/Reports/Server.php';
 require_once $tmpExtPath . 'Classes/Reports/SysLog.php';
 require_once $tmpExtPath . 'Classes/Reports/Links.php';
+require_once $tmpExtPath . 'Classes/Reports/Applications.php';
 require_once $tmpExtPath . 'Classes/Service/Compatibility.php';
 /**
  * Main service class which creates and sends reports for this TYPO3 installation
@@ -142,6 +143,7 @@ class Tx_Brainmonitor_Service_Dispatcher
             'system' => 'Tx_Brainmonitor_Reports_Server',
             'disc' => 'Tx_Brainmonitor_Reports_Disc',
             'links' => 'Tx_Brainmonitor_Reports_Links',
+            'applications' => 'Tx_Brainmonitor_Reports_Applications',
         );
         $enabledReports = array();
         if(isset($params['reports'])) {
