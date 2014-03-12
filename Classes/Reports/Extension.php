@@ -223,11 +223,7 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
                 $select = 'uid, username, admin';
                 $from = 'be_users';
                 $orderBy = 'uid ASC';
-                $where = 'uid IN ('.implode(', ', $userIds).')';
-                // Add condition if more than one user was logged in
-                if ($userCount > 1) {
-                    $where .= ' AND admin = 1';
-                }
+                $where = 'uid IN ('.implode(', ', $userIds).') AND admin = 1';
                 $beUsers = $db->fetchList($select, $from, $where, $orderBy);
             }
             foreach ($beUsers as $userRow) {
