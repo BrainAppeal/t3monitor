@@ -25,7 +25,9 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
-require_once(PATH_t3lib . 'class.t3lib_install.php');
+if (defined('PATH_t3lib') && file_exists(PATH_t3lib . 'class.t3lib_install.php')) {
+    require_once(PATH_t3lib . 'class.t3lib_install.php');
+}
 /**
  * Report class for extensions
  *
