@@ -157,5 +157,21 @@ class Tx_Brainmonitor_Service_Compatibility implements t3lib_Singleton {
             return \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance($className);
         }
     }
+
+    public function initTsfe()
+    {
+        global $TYPO3_CONF_VARS;
+        // $GLOBALS['TSFE']->sys_page only needed for TYPO3 >= 6.x
+        $t3ver = $this->int_from_ver(TYPO3_version);
+        if ($t3ver >= 6000000) {
+            if (!($GLOBALS['TSFE'] instanceof \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController)) {
+                $pageId = \TYPO3\CMS\Core\Utility\GeneralUtility::_GP('id');
+                $GLOBALS['TSFE'] = self::makeInstance('TYPO3\\CMS\\Frontend\\Controller\\TypoScriptFrontendController', $TYPO3_CONF_VARS, $pageId, 0, true);
+            }
+            if (!($GLOBALS['TSFE']->sys_page instanceof \TYPO3\CMS\Frontend\Page\PageRepository)) {
+                $GLOBALS['TSFE']->sys_page = self::makeInstance('TYPO3\\CMS\\Frontend\\Page\\PageRepository');
+            }
+        }
+    }
 }
 ?>

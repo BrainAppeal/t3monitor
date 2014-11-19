@@ -78,6 +78,9 @@ class Tx_Brainmonitor_Service_Dispatcher
      */
     private function init()
     {
+        $comp = Tx_Brainmonitor_Service_Compatibility::getInstance();
+
+        $comp->initTsfe();
         // Config
         $extConfig = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
 
@@ -88,10 +91,10 @@ class Tx_Brainmonitor_Service_Dispatcher
         $excludeExtList = explode(',', $extConfig['exclude_local']);
         $this->config->setExcludeExtList($excludeExtList);
 
-        if (!defined(PATH_typo3))
+        if (!defined(PATH_typo3)) {
             define('PATH_typo3', PATH_site . TYPO3_mainDir);
+        }
         if (!is_object($GLOBALS['LANG'])) {
-            $comp = Tx_Brainmonitor_Service_Compatibility::getInstance();
             $comp->initLang();
         }
     }
