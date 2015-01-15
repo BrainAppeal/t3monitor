@@ -3,7 +3,7 @@
 /***************************************************************
  * Extension Manager/Repository config file for ext "brainmonitor".
  *
- * Auto generated 18-11-2014 15:18
+ * Auto generated 19-11-2014 14:28
  *
  * Manual updates:
  * Only the data in the array - everything else is removed by next
@@ -18,7 +18,7 @@ $EM_CONF[$_EXTKEY] = array(
 	'author_email' => 'info@brain-appeal.com',
 	'author_company' => 'Brain Appeal GmbH',
 	'shy' => '',
-	'version' => '2.0.10',
+	'version' => '2.0.11',
 	'priority' => '',
 	'module' => '',
 	'state' => 'stable',

@@ -119,6 +119,7 @@ class Tx_Brainmonitor_Reports_Disc extends Tx_Brainmonitor_Reports_Abstract
         }
         return $size;
     }
+
     /**
      * Fallback function to calculate total size of dir
      *
@@ -129,7 +130,14 @@ class Tx_Brainmonitor_Reports_Disc extends Tx_Brainmonitor_Reports_Abstract
     {
         $size = 0;
         foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory)) as $file) {
-            $size += $file->getSize();
+            /* @var $file SplFileInfo */
+            if (!$file->isLink() && $file->isReadable()) {
+                try {
+                    $size += $file->getSize();
+                } catch (Exception $e) {
+                    unset($e);
+                }
+            }
         }
         return $size;
     }
