@@ -131,7 +131,13 @@ class Tx_Brainmonitor_Reports_Disc extends Tx_Brainmonitor_Reports_Abstract
         $size = 0;
         foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory)) as $file) {
             /* @var $file SplFileInfo */
-            if (!$file->isLink() && $file->isReadable()) {
+            $isReadable = true;
+            try {
+                $isReadable = !$file->isLink() && $file->isReadable();
+            } catch (Exception $e) {
+                unset($e);
+            }
+            if ($isReadable) {
                 try {
                     $size += $file->getSize();
                 } catch (Exception $e) {
