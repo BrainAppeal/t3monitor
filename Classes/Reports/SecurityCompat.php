@@ -109,7 +109,7 @@ class Tx_Brainmonitor_Reports_SecurityCompat extends Tx_Brainmonitor_Reports_Sec
         );
         $value = 'Update Complete';
         $severity = self::OK;
-        if (!t3lib_div::compat_version(TYPO3_branch)) {
+        if (!Tx_Brainmonitor_Service_Compatibility::getInstance()->compat_version(TYPO3_branch)) {
             $value = 'Update Incomplete';
             $severity = self::WARNING;
         }
@@ -174,26 +174,20 @@ class Tx_Brainmonitor_Reports_SecurityCompat extends Tx_Brainmonitor_Reports_Sec
     /**
      * Gets the bytes value from a measurement string like "100k".
      *
-     * @see t3lib_div::getBytesFromSizeMeasurement (not available in TYPO3 4.2)
+     * @see \TYPO3\CMS\Core\Utility\GeneralUtility::getBytesFromSizeMeasurement (not available in TYPO3 <= 4.2)
      *
      * @param	string		$measurement: The measurement (e.g. "100k")
      * @return	integer		The bytes value (e.g. 102400)
      */
     private static function getBytesFromSizeMeasurement($measurement)
     {
-        $bytes = 0;
+        $bytes = doubleval($measurement);
         if (stripos($measurement, 'G')) {
-            $bytes = doubleval($measurement) * 1024 * 1024 * 1024;
-        } else {
-            if (stripos($measurement, 'M')) {
-                $bytes = doubleval($measurement) * 1024 * 1024;
-            } else {
-                if (stripos($measurement, 'K')) {
-                    $bytes = doubleval($measurement) * 1024;
-                } else {
-                    $bytes = doubleval($measurement);
-                }
-            }
+            $bytes *= 1024 * 1024 * 1024;
+        } elseif (stripos($measurement, 'M')) {
+            $bytes *= 1024 * 1024;
+        } elseif (stripos($measurement, 'K')) {
+            $bytes *= 1024;
         }
         return $bytes;
     }
@@ -221,8 +215,10 @@ class Tx_Brainmonitor_Reports_SecurityCompat extends Tx_Brainmonitor_Reports_Sec
 
         $value = 'OK';
         $severity = self::OK;
-        $defaultParts = t3lib_div::trimExplode('|', FILE_DENY_PATTERN_DEFAULT, TRUE);
-        $givenParts = t3lib_div::trimExplode('|', $GLOBALS['TYPO3_CONF_VARS']['BE']['fileDenyPattern'], TRUE);
+        $fileDenyPattern = $GLOBALS['TYPO3_CONF_VARS']['BE']['fileDenyPattern'];
+        $compatibilityObject = Tx_Brainmonitor_Service_Compatibility::getInstance();
+        $defaultParts = $compatibilityObject->trimExplode('|', FILE_DENY_PATTERN_DEFAULT, TRUE);
+        $givenParts = $compatibilityObject->trimExplode('|', $fileDenyPattern, TRUE);
         $result = array_intersect($defaultParts, $givenParts);
         if ($defaultParts !== $result) {
             $value = 'Insecure';
@@ -234,8 +230,8 @@ class Tx_Brainmonitor_Reports_SecurityCompat extends Tx_Brainmonitor_Reports_Sec
         );
         $value = 'OK';
         $severity = self::OK;
-        if ($GLOBALS['TYPO3_CONF_VARS']['BE']['fileDenyPattern'] != FILE_DENY_PATTERN_DEFAULT
-            && t3lib_div::verifyFilenameAgainstDenyPattern('.htaccess')) {
+        if ($fileDenyPattern != FILE_DENY_PATTERN_DEFAULT
+            && $compatibilityObject->verifyFilenameAgainstDenyPattern('.htaccess')) {
             $value = 'Insecure';
             $severity = self::ERROR;
         }

@@ -27,7 +27,7 @@
 /**
  * This class is a copy of the tt_news class class.tx_ttnews_compatibility.php
  */
-class Tx_Brainmonitor_Service_Compatibility implements t3lib_Singleton {
+class Tx_Brainmonitor_Service_Compatibility {
 	/**
 	 * @var boolean
 	 */
@@ -83,13 +83,13 @@ class Tx_Brainmonitor_Service_Compatibility implements t3lib_Singleton {
 	/**
 	 * Returns an integer from a three part version number, eg '4.12.3' -> 4012003
 	 *
-	 * @param string $verNumberStr Version number on format x.x.x
+	 * @param string $versionNumber Version number on format x.x.x
 	 * @return integer Integer version of version number (where each part can count to 999)
 	 */
 	public function int_from_ver($versionNumber) {
 		$versionParts = explode('.', $versionNumber);
 		return intval(((int) $versionParts[0] . str_pad((int) $versionParts[1], 3, '0', STR_PAD_LEFT)) . str_pad((int) $versionParts[2], 3, '0', STR_PAD_LEFT));
-        }
+    }
 
 	public function testInt($var) {
 		if ($var === '') {
@@ -97,6 +97,36 @@ class Tx_Brainmonitor_Service_Compatibility implements t3lib_Singleton {
 		}
 		return (string) intval($var) === (string) $var;
 	}
+    public function array2xml(array $array, $NSprefix = '', $level = 0, $docTag = 'phparray') {
+        if (class_exists('t3lib_div')) {
+            return t3lib_div::array2xml($array, '', 0, 'xml');
+        } else {
+            return  \TYPO3\CMS\Core\Utility\GeneralUtility::array2xml($array, $NSprefix, $level, $docTag);
+        }
+    }
+    public function compat_version($verNumberStr) {
+        if (class_exists('t3lib_div')) {
+            return t3lib_div::compat_version($verNumberStr);
+        } else {
+            return  \TYPO3\CMS\Core\Utility\GeneralUtility::compat_version($verNumberStr);
+        }
+    }
+
+    public function trimExplode($delim, $string, $removeEmptyValues = FALSE, $limit = 0) {
+        if (class_exists('t3lib_div')) {
+            return t3lib_div::trimExplode($delim, $string, $removeEmptyValues, $limit);
+        } else {
+            return  \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode($delim, $string, $removeEmptyValues, $limit);
+        }
+    }
+
+    public function verifyFilenameAgainstDenyPattern($filename) {
+        if (class_exists('t3lib_div')) {
+            return t3lib_div::verifyFilenameAgainstDenyPattern($filename);
+        } else {
+            return  \TYPO3\CMS\Core\Utility\GeneralUtility::verifyFilenameAgainstDenyPattern($filename);
+        }
+    }
 
 	/**
 	 * Includes a locallang-xml file and returns the $LOCAL_LANG array
@@ -120,7 +150,7 @@ class Tx_Brainmonitor_Service_Compatibility implements t3lib_Singleton {
 	 */
 	protected function getLlxmlParser() {
 		if (!isset($this->llxmlParser)) {
-			$this->llxmlParser = t3lib_div::makeInstance('t3lib_l10n_parser_Llxml');
+			$this->llxmlParser = self::makeInstance('TYPO3\\CMS\\Core\\Localization\\Parser\\LocallangXmlParser');
 		}
 		return $this->llxmlParser;
 	}
@@ -145,7 +175,7 @@ class Tx_Brainmonitor_Service_Compatibility implements t3lib_Singleton {
     /**
      * Creates an instance of a class taking into account the class-extensions
      *
-     * @throws \InvalidArgumentException if classname is an empty string
+     * @throws \InvalidArgumentException if class name is an empty string
      * @param string $className name of the class to instantiate, must not be empty
      * @return object the created instance
      */
@@ -165,8 +195,15 @@ class Tx_Brainmonitor_Service_Compatibility implements t3lib_Singleton {
         $t3ver = $this->int_from_ver(TYPO3_version);
         if ($t3ver >= 6000000) {
             if (!($GLOBALS['TSFE'] instanceof \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController)) {
-                $pageId = \TYPO3\CMS\Core\Utility\GeneralUtility::_GP('id');
-                $GLOBALS['TSFE'] = self::makeInstance('TYPO3\\CMS\\Frontend\\Controller\\TypoScriptFrontendController', $TYPO3_CONF_VARS, $pageId, 0, true);
+                $pageId = (int) \TYPO3\CMS\Core\Utility\GeneralUtility::_GP('id');
+                if (empty($pageId)) {
+                    $db = Tx_Brainmonitor_Helper_Database::getInstance();
+                    $startRow = $db->getStartPage();
+                    if (!empty($startRow)) {
+                        $pageId = $startRow['uid'];
+                    }
+                }
+                $GLOBALS['TSFE'] = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Frontend\\Controller\\TypoScriptFrontendController', $TYPO3_CONF_VARS, $pageId, 0, true);
             }
             if (!($GLOBALS['TSFE']->sys_page instanceof \TYPO3\CMS\Frontend\Page\PageRepository)) {
                 $GLOBALS['TSFE']->sys_page = self::makeInstance('TYPO3\\CMS\\Frontend\\Page\\PageRepository');

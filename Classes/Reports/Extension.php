@@ -76,11 +76,11 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
         } elseif ($t3ver >= 4005000) {
             require_once(PATH_typo3 . '/sysext/em/classes/extensions/class.tx_em_extensions_list.php');
             require_once(PATH_typo3 . '/sysext/em/classes/extensions/class.tx_em_extensions_details.php');
-            $this->emList = t3lib_div::makeInstance('tx_em_Extensions_List');
-            $this->emDetails = t3lib_div::makeInstance('tx_em_Extensions_Details');
+            $this->emList = Tx_Brainmonitor_Service_Compatibility::makeInstance('tx_em_Extensions_List');
+            $this->emDetails = Tx_Brainmonitor_Service_Compatibility::makeInstance('tx_em_Extensions_Details');
         } else {
             require_once(PATH_typo3 . '/mod/tools/em/class.em_index.php');
-            $this->emList = t3lib_div::makeInstance('SC_mod_tools_em_index');
+            $this->emList = Tx_Brainmonitor_Service_Compatibility::makeInstance('SC_mod_tools_em_index');
 
             //@see SC_mod_tools_em_index::init
             // GLOBAL Paths

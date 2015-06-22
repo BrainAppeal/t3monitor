@@ -91,7 +91,7 @@ class Tx_Brainmonitor_Helper_Database
      *
      * @return Tx_Brainmonitor_Helper_Database The class instance (Singleton)
      */
-    public function getInstance()
+    public static function getInstance()
     {
         if (self::$_instance == null) {
             self::$_instance = new Tx_Brainmonitor_Helper_Database();

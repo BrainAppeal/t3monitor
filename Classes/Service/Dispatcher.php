@@ -213,7 +213,7 @@ class Tx_Brainmonitor_Service_Dispatcher
      */
     private function sendOutputAsXmlData(array $data)
     {
-        $xml = t3lib_div::array2xml($data, '', 0, 'xml');
+        $xml = Tx_Brainmonitor_Service_Compatibility::getInstance()->array2xml($data, '', 0, 'xml');
         $crypt = new Tx_Brainmonitor_Helper_Encryption();
         $encKey = $this->config->getEncryptionkey();
         $encStr = $crypt->encrypt($encKey, $xml);
