@@ -51,10 +51,16 @@ class Tx_Brainmonitor_Reports_Applications extends Tx_Brainmonitor_Reports_Abstr
             $vFile = $dir . '/core/Version.php';
             if (file_exists($vFile)) {
                 require_once $vFile;
-                $info['PiwikVersion'] = array(
-                    'value' => Piwik_Version::VERSION,
-                    'severity' => -2,
-                );
+                $className = 'Piwik_Version';
+                if (!class_exists($className))  {
+                    $className = '\\Piwik\\Version';
+                }
+                if (class_exists($className)) {
+                    $info['PiwikVersion'] = array(
+                        'value' => $className::VERSION,
+                        'severity' => -2,
+                    );
+                }
             }
         }
         if (!empty($info)) {
