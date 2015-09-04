@@ -25,7 +25,11 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
-$tmpExtPath = t3lib_extMgm::extPath('brainmonitor');
+if (class_exists('t3lib_extMgm')) {
+    $tmpExtPath = t3lib_extMgm::extPath('brainmonitor');
+} else {
+    $tmpExtPath = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('brainmonitor');
+}
 require_once $tmpExtPath . 'Classes/Helper/Config.php';
 require_once $tmpExtPath . 'Classes/Helper/Database.php';
 require_once $tmpExtPath . 'Classes/Helper/Encryption.php';
