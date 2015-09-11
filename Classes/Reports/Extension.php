@@ -110,10 +110,10 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
             }
             $extensions = $exts[0];
         } else {
+            /* @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
             $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Extbase\\Object\\ObjectManager');
-            /* @var $objectManager \TYPO3\CMS\Extbase\Object\ObjectManager */
-            $objectName = 'TYPO3\\CMS\\Extensionmanager\\Utility\\ListUtility';
-            $listUtility = $objectManager->get($objectName);
+            /* @var \TYPO3\CMS\Extensionmanager\Utility\ListUtility $listUtility */
+            $listUtility = $objectManager->get('TYPO3\\CMS\\Extensionmanager\\Utility\\ListUtility');
             $extensions = $listUtility->getAvailableAndInstalledExtensionsWithAdditionalInformation();
         }
         return $extensions;

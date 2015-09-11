@@ -59,7 +59,6 @@ class Tx_Brainmonitor_Reports_Database extends Tx_Brainmonitor_Reports_Abstract
         //Add report for used database collation
         $severity = self::INFO;
         $collations = array_keys($collations);
-        $value = '';
         if(count($collations) > 1){
             $severity = self::WARNING;
             $value = implode(', ', $collations);
