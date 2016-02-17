@@ -40,6 +40,7 @@ require_once $tmpExtPath . 'Classes/Reports/Reports.php';
 require_once $tmpExtPath . 'Classes/Reports/Database.php';
 require_once $tmpExtPath . 'Classes/Reports/Disc.php';
 require_once $tmpExtPath . 'Classes/Reports/Extension.php';
+require_once $tmpExtPath . 'Classes/Reports/Internal.php';
 require_once $tmpExtPath . 'Classes/Reports/SecurityCompat.php';
 require_once $tmpExtPath . 'Classes/Reports/Server.php';
 require_once $tmpExtPath . 'Classes/Reports/SysLog.php';
@@ -143,6 +144,7 @@ class Tx_Brainmonitor_Service_Dispatcher
         $this->config->setMinTstamp($lastCheck);
 
         $reports = array(
+            'internal' => 'Tx_Brainmonitor_Reports_Internal',
             'security' => 'Tx_Brainmonitor_Reports_SecurityCompat',
             'installed_extensions' => 'Tx_Brainmonitor_Reports_Extension',
             'database' => 'Tx_Brainmonitor_Reports_Database',

@@ -203,7 +203,11 @@ class Tx_Brainmonitor_Service_Compatibility {
                         $pageId = $startRow['uid'];
                     }
                 }
+				/** @var \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController */
                 $GLOBALS['TSFE'] = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Frontend\\Controller\\TypoScriptFrontendController', $TYPO3_CONF_VARS, $pageId, 0, true);
+				if (!isset($GLOBALS['TSFE']->config['config'])) {
+					$GLOBALS['TSFE']->config['config'] = array();
+				};
             }
             if (!($GLOBALS['TSFE']->sys_page instanceof \TYPO3\CMS\Frontend\Page\PageRepository)) {
                 $GLOBALS['TSFE']->sys_page = self::makeInstance('TYPO3\\CMS\\Frontend\\Page\\PageRepository');

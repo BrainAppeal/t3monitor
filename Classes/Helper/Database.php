@@ -169,7 +169,8 @@ class Tx_Brainmonitor_Helper_Database
     public function getTablesInfo()
     {
         if ($this->tableInfo === null) {
-            $this->tableInfo = $GLOBALS['TYPO3_DB']->admin_get_tables();
+            $db = $this->getDatabaseConnection();
+            $this->tableInfo = $db->admin_get_tables();
         }
         return $this->tableInfo;
     }
@@ -186,9 +187,10 @@ class Tx_Brainmonitor_Helper_Database
      */
     public function fetchRow($select, $from, $where, $orderBy = '')
     {
-        $dbRes = $GLOBALS['TYPO3_DB']->exec_SELECTquery($select, $from, $where, '', $orderBy);
-        $record = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($dbRes);
-        $GLOBALS['TYPO3_DB']->sql_free_result($dbRes);
+        $db = $this->getDatabaseConnection();
+        $dbRes = $db->exec_SELECTquery($select, $from, $where, '', $orderBy);
+        $record = $db->sql_fetch_assoc($dbRes);
+        $db->sql_free_result($dbRes);
         return $record;
     }
 
@@ -205,23 +207,34 @@ class Tx_Brainmonitor_Helper_Database
      */
     public function fetchList($select, $from, $where, $orderBy, $limit = '')
     {
-        $dbRes = $GLOBALS['TYPO3_DB']->exec_SELECTquery($select, $from, $where, '', $orderBy, $limit);
+        $db = $this->getDatabaseConnection();
+        $dbRes = $db->exec_SELECTquery($select, $from, $where, '', $orderBy, $limit);
         $records = array();
-        while ($record = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($dbRes)) {
+        while ($record = $db->sql_fetch_assoc($dbRes)) {
             $records[] = $record;
         }
-        $GLOBALS['TYPO3_DB']->sql_free_result($dbRes);
+        $db->sql_free_result($dbRes);
         return $records;
     }
+
     /**
      * Escaping and quoting values for SQL statements.
      *
-     * @param	string		Input string
-     *
-     * @see t3lib_DB::fullQuoteStr
+     * @param string $string
+     * @param  string $table
+     * @return string
+     * @see \TYPO3\CMS\Core\Database\DatabaseConnection::fullQuoteStr
      */
     public function fullQuoteStr($string, $table)
     {
-        return $GLOBALS['TYPO3_DB']->fullQuoteStr($string, $table);
+        return $this->getDatabaseConnection()->fullQuoteStr($string, $table);
+    }
+
+    /**
+     * @return \TYPO3\CMS\Core\Database\DatabaseConnection $database
+     */
+    public function getDatabaseConnection()
+    {
+        return $GLOBALS['TYPO3_DB'];
     }
 }
