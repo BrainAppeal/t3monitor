@@ -12,13 +12,13 @@
 
 $EM_CONF[$_EXTKEY] = array(
 	'title' => 'TYPO3 Monitor',
-	'description' => 'Monitors typo3 installation for updates and security problems (Requires an account on http://www.typo3-monitor.de/)',
+	'description' => 'Monitors TYPO3 installation for updates and security problems (Requires an account on http://www.typo3-monitor.de/)',
 	'category' => 'misc',
 	'author' => 'Gert Hammes',
 	'author_email' => 'info@brain-appeal.com',
 	'author_company' => 'Brain Appeal GmbH',
 	'shy' => '',
-	'version' => '2.0.11',
+	'version' => '2.0.12',
 	'priority' => '',
 	'module' => '',
 	'state' => 'stable',
