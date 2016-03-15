@@ -32,8 +32,17 @@
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_Brainmonitor_Helper_Encryption
+class Tx_T3monitor_Helper_Encryption
 {
+    private $encryptionType = 'default';
+
+    public function __construct()
+    {
+        if (function_exists('openssl_encrypt')) {
+            $this->encryptionType = 'openssl';
+        }
+    }
+
 
     /**
      * Encrypt given string with given $key
@@ -43,6 +52,82 @@ class Tx_Brainmonitor_Helper_Encryption
      * @return string The encrypted string
      * */
     public function encrypt($key, $string)
+    {
+        switch ($this->encryptionType) {
+            case 'openssl':
+                $encryptedStr = '01:' . $this->encryptOpenSsl($key, $string);
+                break;
+            default:
+                $encryptedStr = $this->encryptDefault($key, $string);
+                break;
+        }
+        return $encryptedStr;
+    }
+
+    /**
+     * Decryption of string with given $key
+     *
+     * @param string $key The key used for decryption
+     * @param string $encStr Encrypted string
+     * @return string The decrypted string
+     */
+    public function decrypt($key, $encStr)
+    {
+        $encryptionType = $this->encryptionType;
+        if (strpos($encStr, '01:') === 0) {
+            $encStr = substr($encStr, 3);
+            $encryptionType = 'openssl';
+        }
+        switch ($encryptionType) {
+            case 'openssl':
+                $decryptedStr = $this->decryptOpenSsl($key, $encStr);
+                break;
+            default:
+                $decryptedStr = $this->decryptDefault($key, $encStr);
+                break;
+        }
+        return $decryptedStr;
+    }
+
+    /**
+     * OpenSSL encryption for given string with given $key
+     *
+     * @param string $key The key used for encryption
+     * @param string $string The key used for encryption
+     * @return string The encrypted string
+     */
+    private function encryptOpenSsl($key, $string)
+    {
+        $key = hash('sha256', substr($key, 0, 16));
+        $iv = substr(hash('sha256', substr($key, 16)), 0, 16);
+        $ciphertext = openssl_encrypt($string, 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv);
+        $output = base64_encode($ciphertext);
+        return $output;
+    }
+
+    /**
+     * OpenSSL decryption of given string with given $key
+     *
+     * @param string $key The key used for decryption
+     * @param string $encStr Encrypted string
+     * @return string The decrypted string
+     */
+    private function decryptOpenSsl($key, $encStr)
+    {
+        $key = hash('sha256', substr($key, 0, 16));
+        $iv = substr(hash('sha256', substr($key, 16)), 0, 16);
+        $output = openssl_decrypt(base64_decode($encStr), 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv);
+        return $output;
+    }
+
+    /**
+     * Fallback encryption for given string with given $key
+     *
+     * @param string $key The key used for encryption
+     * @param string $string The key used for encryption
+     * @return string The encrypted string
+     */
+    private function encryptDefault($key, $string)
     {
         $out = '';
         $cryptLen = strlen($key);
@@ -55,14 +140,15 @@ class Tx_Brainmonitor_Helper_Encryption
         $strHash = substr(md5($key . ':' . $str), 0, 10);
         return $strHash . ':' . $str;
     }
+
     /**
-     * Decrypt given string with given $key
+     * Fallback decryption of given string with given $key
      *
      * @param string $key The key used for decryption
      * @param string $encStr Encrypted string
      * @return string The decrypted string
      */
-    public function decrypt($key, $encStr)
+    private function decryptDefault($key, $encStr)
     {
         $dcrStr = '';
         $parts = explode(':', $encStr);

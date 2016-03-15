@@ -31,15 +31,8 @@
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_Brainmonitor_Helper_Config
+class Tx_T3monitor_Helper_Config
 {
-    /**
-     * The secret authentication key; required to run the dispatcher
-     * and generate the reports.
-     *
-     * @var string
-     */
-    private $secretKey;
     /**
      * The secret encryption key; all send data are encrypted with this key.
      * This is used to prevent security issues if the secret key
@@ -48,7 +41,7 @@ class Tx_Brainmonitor_Helper_Config
      *
      * @var string
      */
-    private $encryptionkey;
+    private $encryptionKey = '';
 
     /**
      * Show changed files in extension
@@ -91,39 +84,25 @@ class Tx_Brainmonitor_Helper_Config
     private $logfilePath;
 
     /**
+     * Returns the encryption key. If $forLocalEncryption flag is true, only the part of the key used for local
+     * encryption of the data is used
      *
+     * @param bool $forLocalEncryption
      * @return string
      */
-    public function getSecretKey()
+    public function getEncryptionKey($forLocalEncryption = false)
     {
-        return $this->secretKey;
+        return $forLocalEncryption ? substr($this->encryptionKey, 32) : $this->encryptionKey;
     }
 
     /**
+     * Sets the encryption key
      *
-     * @param string $secretKey
+     * @param string $encryptionKey
      */
-    public function setSecretKey($secretKey)
+    public function setEncryptionKey($encryptionKey)
     {
-        $this->secretKey = $secretKey;
-    }
-
-    /**
-     *
-     * @return string
-     */
-    public function getEncryptionkey()
-    {
-        return $this->encryptionkey;
-    }
-
-    /**
-     *
-     * @param string $encryptionkey
-     */
-    public function setEncryptionkey($encryptionkey)
-    {
-        $this->encryptionkey = $encryptionkey;
+        $this->encryptionKey = (string) trim($encryptionKey);
     }
 
     /**

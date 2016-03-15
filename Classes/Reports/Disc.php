@@ -32,14 +32,14 @@
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_Brainmonitor_Reports_Disc extends Tx_Brainmonitor_Reports_Abstract
+class Tx_T3monitor_Reports_Disc extends Tx_T3monitor_Reports_Abstract
 {
     /**
      * Create reports
      *
-     * @param Tx_Brainmonitor_Reports_Reports $reportHandler
+     * @param Tx_T3monitor_Reports_Reports $reportHandler
      */
-    public function addReports(Tx_Brainmonitor_Reports_Reports $reportHandler)
+    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
         $info = array();
         $basePath = PATH_site;

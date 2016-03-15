@@ -34,15 +34,15 @@ require_once 'Security.php';
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_Brainmonitor_Reports_SecurityCompat extends Tx_Brainmonitor_Reports_Security
+class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
 {
 
     /**
      * Returns the system status reports
      *
-     * @param Tx_Brainmonitor_Reports_Reports $reportHandler
+     * @param Tx_T3monitor_Reports_Reports $reportHandler
      */
-    public function addReports(Tx_Brainmonitor_Reports_Reports $reportHandler)
+    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
         $reportsInfo = array();
         $reportsInfo = $this->getReportsFromExt();
@@ -109,7 +109,7 @@ class Tx_Brainmonitor_Reports_SecurityCompat extends Tx_Brainmonitor_Reports_Sec
         );
         $value = 'Update Complete';
         $severity = self::OK;
-        if (!Tx_Brainmonitor_Service_Compatibility::getInstance()->compat_version(TYPO3_branch)) {
+        if (!Tx_T3monitor_Service_Compatibility::getInstance()->compat_version(TYPO3_branch)) {
             $value = 'Update Incomplete';
             $severity = self::WARNING;
         }
@@ -216,7 +216,7 @@ class Tx_Brainmonitor_Reports_SecurityCompat extends Tx_Brainmonitor_Reports_Sec
         $value = 'OK';
         $severity = self::OK;
         $fileDenyPattern = $GLOBALS['TYPO3_CONF_VARS']['BE']['fileDenyPattern'];
-        $compatibilityObject = Tx_Brainmonitor_Service_Compatibility::getInstance();
+        $compatibilityObject = Tx_T3monitor_Service_Compatibility::getInstance();
         $defaultParts = $compatibilityObject->trimExplode('|', FILE_DENY_PATTERN_DEFAULT, TRUE);
         $givenParts = $compatibilityObject->trimExplode('|', $fileDenyPattern, TRUE);
         $result = array_intersect($defaultParts, $givenParts);
@@ -261,7 +261,7 @@ class Tx_Brainmonitor_Reports_SecurityCompat extends Tx_Brainmonitor_Reports_Sec
     {
         $severity = self::OK;
         $value = 'OK';
-        $db = Tx_Brainmonitor_Helper_Database::getInstance();
+        $db = Tx_T3monitor_Helper_Database::getInstance();
         $where = 'username = ' . $db->fullQuoteStr('admin', 'be_users')
             . ' AND password = ' . $db->fullQuoteStr(md5('password'), 'be_users')
             . ' AND deleted = 0';
