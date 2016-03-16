@@ -6,11 +6,11 @@
 	</meta>
 	<data type="array">
 		<languageKey index="default" type="array">
-			<label index="encryption_key">Encryption Key: for encrypting the transferred data</label>
+			<label index="encryption_key">Encryption Key: for encrypting the transferred data. You will receive the key for this website in your T3Monitor-Account (www.t3monitor.com).</label>
 			<label index="exclude_local">Exclude extensions: Exclude these local extensions in the T3Monitor check. All system extensions are excluded automatically</label>
 		</languageKey>
 		<languageKey index="de" type="array">
-			<label index="encryption_key">Encryption Key: für die Verschlüsselung der übertragenen Daten</label>
+			<label index="encryption_key">Encryption Key: Für die Verschlüsselung der übertragenen Daten. Den Key für diese Webseite erhalten Sie in Ihrem T3Monitor-Account (www.t3monitor.de).</label>
 			<label index="exclude_local">Extensions ausschließen: Diese lokale Extensions sollen vom T3Monitor ignoriert werden. Alle System-Extensions werden automatisch ignoriert.</label>
 		</languageKey>
 
