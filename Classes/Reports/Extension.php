@@ -257,11 +257,13 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
      * @param array $array
      */
     private function removeEmptyKeys(&$array){
-        foreach ($array as $key => &$value) {
-            if (strlen($key) == 0) {
-                unset($array[$key]);
-            } elseif (is_array($value)) {
-                $this->removeEmptyKeys($value);
+        if (!empty($array)) {
+            foreach ($array as $key => &$value) {
+                if (strlen($key) == 0) {
+                    unset($array[$key]);
+                } elseif (is_array($value)) {
+                    $this->removeEmptyKeys($value);
+                }
             }
         }
     }
