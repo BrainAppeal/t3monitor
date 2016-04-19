@@ -32,12 +32,12 @@
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_Brainmonitor_Helper_Database
+class Tx_T3monitor_Helper_Database
 {
     /**
      * Singleton instance
      *
-     * @var Tx_Brainmonitor_Helper_Database
+     * @var Tx_T3monitor_Helper_Database
      */
     private static $_instance = null;
     /**
@@ -62,11 +62,10 @@ class Tx_Brainmonitor_Helper_Database
     }
     private function init()
     {
-        $comp = Tx_Brainmonitor_Service_Compatibility::getInstance();
+        $comp = Tx_T3monitor_Service_Compatibility::getInstance();
         $t3ver = $comp->int_from_ver(TYPO3_version);
         if ($t3ver >= 6000000) {
-            // Starting from TYPO3 6.1, the database will connect itself when
-            // needed
+            // Starting from TYPO3 6.1, the database will connect itself when needed
             if ($t3ver < 6001000) {
                 require_once \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('frontend')
                     . 'Classes/Utility/EidUtility.php';
@@ -87,14 +86,14 @@ class Tx_Brainmonitor_Helper_Database
     /**
      * (Static) function that returns the Singleton instance of this class.
      *
-     * Usage: $db = Tx_Brainmonitor_Helper_Database::getInstance();
+     * Usage: $db = Tx_T3monitor_Helper_Database::getInstance();
      *
-     * @return Tx_Brainmonitor_Helper_Database The class instance (Singleton)
+     * @return Tx_T3monitor_Helper_Database The class instance (Singleton)
      */
     public static function getInstance()
     {
         if (self::$_instance == null) {
-            self::$_instance = new Tx_Brainmonitor_Helper_Database();
+            self::$_instance = new Tx_T3monitor_Helper_Database();
         }
         return self::$_instance;
     }

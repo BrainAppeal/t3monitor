@@ -32,7 +32,7 @@
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_Brainmonitor_Helper_Logger
+class Tx_T3monitor_Helper_Logger
 {
 
     /**
@@ -44,7 +44,7 @@ class Tx_Brainmonitor_Helper_Logger
 
     /**
      *
-     * @var type Absolute path to log file
+     * @var string Absolute path to log file
      */
     private $absLogfile;
 

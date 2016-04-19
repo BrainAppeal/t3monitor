@@ -25,10 +25,10 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
-if (class_exists('t3lib_extMgm')) {
-    $tmpExtPath = t3lib_extMgm::extPath('brainmonitor');
+if (class_exists('\TYPO3\CMS\Core\Utility\ExtensionManagementUtility')) {
+    $tmpExtPath = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('t3monitor');
 } else {
-    $tmpExtPath = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('brainmonitor');
+    $tmpExtPath = t3lib_extMgm::extPath('t3monitor');
 }
 require_once $tmpExtPath . 'Classes/Helper/Config.php';
 require_once $tmpExtPath . 'Classes/Helper/Database.php';
@@ -54,7 +54,7 @@ require_once $tmpExtPath . 'Classes/Service/Compatibility.php';
  * @package T3Monitor
  * @subpackage Service
  */
-class Tx_Brainmonitor_Service_Dispatcher
+class Tx_T3monitor_Service_Dispatcher
 {
 
     /**
@@ -62,11 +62,11 @@ class Tx_Brainmonitor_Service_Dispatcher
      *
      * @var string
      */
-    private $extKey = 'brainmonitor';
+    private $extKey = 't3monitor';
     /**
      * Configuration object
      *
-     * @var Tx_Brainmonitor_Helper_Config
+     * @var Tx_T3monitor_Helper_Config
      */
     private $config;
 
@@ -83,15 +83,13 @@ class Tx_Brainmonitor_Service_Dispatcher
      */
     private function init()
     {
-        $comp = Tx_Brainmonitor_Service_Compatibility::getInstance();
+        $comp = Tx_T3monitor_Service_Compatibility::getInstance();
 
         $comp->initTsfe();
         // Config
         $extConfig = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
-
-        $this->config = new Tx_Brainmonitor_Helper_Config();
-        $this->config->setSecretKey($extConfig['secret_key']);
-        $this->config->setEncryptionkey($extConfig['encryptionkey']);
+        $this->config = new Tx_T3monitor_Helper_Config();
+        $this->config->setEncryptionKey($extConfig['encryption_key']);
         $this->config->setLogfilePath('');
         $excludeExtList = explode(',', $extConfig['exclude_local']);
         $this->config->setExcludeExtList($excludeExtList);
@@ -109,7 +107,7 @@ class Tx_Brainmonitor_Service_Dispatcher
     public function run()
     {
         $logFile = $this->config->getLogfilePath();
-        $logger = new Tx_Brainmonitor_Helper_Logger($logFile);
+        $logger = new Tx_T3monitor_Helper_Logger($logFile);
         $activateLogging = $this->config->getActivateLogging();
         $logger->setEnabled($activateLogging);
         $params = $_GET;
@@ -117,7 +115,7 @@ class Tx_Brainmonitor_Service_Dispatcher
         $secret = isset($params['secret']) ? $params['secret'] : '';
         $this->confirmKeysOrDie($secret, $logger);
 
-        $db = Tx_Brainmonitor_Helper_Database::getInstance();
+        $db = Tx_T3monitor_Helper_Database::getInstance();
         if(!$db->isConnected()){
             die('ERROR: The current username, password or host was not '
                 . 'accepted when the connection to the database was '
@@ -130,7 +128,7 @@ class Tx_Brainmonitor_Service_Dispatcher
         }
 
         // PARSE TIME BEGIN
-        $timer = new Tx_Brainmonitor_Helper_Timer();
+        $timer = new Tx_T3monitor_Helper_Timer();
         $timer->start('main');
         // write Logfile
         $logger->log('TYPO3 Monitor called by IP: ' . $_SERVER['REMOTE_ADDR']);
@@ -144,25 +142,25 @@ class Tx_Brainmonitor_Service_Dispatcher
         $this->config->setMinTstamp($lastCheck);
 
         $reports = array(
-            'internal' => 'Tx_Brainmonitor_Reports_Internal',
-            'security' => 'Tx_Brainmonitor_Reports_SecurityCompat',
-            'installed_extensions' => 'Tx_Brainmonitor_Reports_Extension',
-            'database' => 'Tx_Brainmonitor_Reports_Database',
-            'sys_log' => 'Tx_Brainmonitor_Reports_SysLog',
-            'system' => 'Tx_Brainmonitor_Reports_Server',
-            'disc' => 'Tx_Brainmonitor_Reports_Disc',
-            'links' => 'Tx_Brainmonitor_Reports_Links',
-            'applications' => 'Tx_Brainmonitor_Reports_Applications',
+            'internal' => 'Tx_T3monitor_Reports_Internal',
+            'security' => 'Tx_T3monitor_Reports_SecurityCompat',
+            'installed_extensions' => 'Tx_T3monitor_Reports_Extension',
+            'database' => 'Tx_T3monitor_Reports_Database',
+            'sys_log' => 'Tx_T3monitor_Reports_SysLog',
+            'system' => 'Tx_T3monitor_Reports_Server',
+            'disc' => 'Tx_T3monitor_Reports_Disc',
+            'links' => 'Tx_T3monitor_Reports_Links',
+            'applications' => 'Tx_T3monitor_Reports_Applications',
         );
         $enabledReports = array();
         if(isset($params['reports'])) {
             $enabledReports = explode(',', trim(strip_tags($params['reports'])));
         }
-        $reportHandler = new Tx_Brainmonitor_Reports_Reports();
+        $reportHandler = new Tx_T3monitor_Reports_Reports();
         foreach($reports as $key => $className){
             if(in_array($key, $enabledReports)){
                 $timer->start($key);
-                $reportObj = Tx_Brainmonitor_Service_Compatibility::makeInstance($className);
+                $reportObj = Tx_T3monitor_Service_Compatibility::makeInstance($className);
                 $reportObj->setConfig($this->config);
                 try {
                     $reportObj->addReports($reportHandler);
@@ -186,24 +184,20 @@ class Tx_Brainmonitor_Service_Dispatcher
      * If not the dispatcher is stopped immediately and an error message is send
      *
      * @param string $key The required secret key
-     * @param Tx_Brainmonitor_Helper_Logger $logger Logging instance
+     * @param Tx_T3monitor_Helper_Logger $logger Logging instance
      */
     private function confirmKeysOrDie($key, $logger)
     {
         $isValid = true;
         $msg = '';
-        $secret = $this->config->getSecretKey();
-        $encKey = $this->config->getEncryptionkey();
-        if (trim($secret) == "") {
-            $msg = 'ERROR: The secret key is not configured';
-            $isValid = false;
-        } elseif (trim($encKey) == "") {
-            $msg = 'ERROR: The encryption key is not configured';
+        $encryptionKey = $this->config->getEncryptionKey();
+        if (strlen($encryptionKey) != 64) {
+            $msg = 'ERROR: The encryption key is not configured or has the wrong format';
             $isValid = false;
         } elseif (empty($key)){
             $msg = 'ERROR: The secret key in the request is missing';
             $isValid = false;
-        } elseif ($key != $secret){
+        } elseif (strpos($encryptionKey, $key) !== 0){
             $msg = 'ERROR: The secret key in the request is wrong';
             $isValid = false;
         }
@@ -219,17 +213,17 @@ class Tx_Brainmonitor_Service_Dispatcher
      */
     private function sendOutputAsXmlData(array $data)
     {
-        $xml = Tx_Brainmonitor_Service_Compatibility::getInstance()->array2xml($data, '', 0, 'xml');
-        $crypt = new Tx_Brainmonitor_Helper_Encryption();
-        $encKey = $this->config->getEncryptionkey();
+        $xml = Tx_T3monitor_Service_Compatibility::getInstance()->array2xml($data, '', 0, 'xml');
+        $crypt = new Tx_T3monitor_Helper_Encryption();
+        $encKey = $this->config->getEncryptionKey(true);
         $encStr = $crypt->encrypt($encKey, $xml);
         header('Content-type: text/plain; charset=utf-8');
         print($encStr);
         exit();
     }
 }
-if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/brainmonitor/Classes/Service/Dispatcher.php']) {
-    include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/brainmonitor/Classes/Service/Dispatcher.php']);
+if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/t3monitor/Classes/Service/Dispatcher.php']) {
+    include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/t3monitor/Classes/Service/Dispatcher.php']);
 }
-$WDOG = Tx_Brainmonitor_Service_Compatibility::makeInstance('Tx_Brainmonitor_Service_Dispatcher');
+$WDOG = Tx_T3monitor_Service_Compatibility::makeInstance('Tx_T3monitor_Service_Dispatcher');
 $WDOG->run();

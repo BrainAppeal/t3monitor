@@ -28,7 +28,7 @@
  * Report class for security. Creates status reports similar to
  * "reports" system extension
  * Only works for TYPO3 >= 4.3
- * @see Tx_Brainmonitor_Reports_SecurityCompat for TYPO3 4.2 compatible output
+ * @see Tx_T3monitor_Reports_SecurityCompat for TYPO3 4.2 compatible output
  *
  * @category TYPO3
  * @package T3Monitor
@@ -36,7 +36,7 @@
  *
  * @see tx_reports_reports_Status
  */
-class Tx_Brainmonitor_Reports_Security extends Tx_Brainmonitor_Reports_Abstract
+class Tx_T3monitor_Reports_Security extends Tx_T3monitor_Reports_Abstract
 {
     /**
      * Class name prefixes for autloading
@@ -48,9 +48,9 @@ class Tx_Brainmonitor_Reports_Security extends Tx_Brainmonitor_Reports_Abstract
     /**
      * Returns the system status reports
      *
-     * @param Tx_Brainmonitor_Reports_Reports $reportHandler
+     * @param Tx_T3monitor_Reports_Reports $reportHandler
      */
-    public function addReports(Tx_Brainmonitor_Reports_Reports $reportHandler)
+    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
         $reportsInfo = array();
         $reportsInfo = $this->getReportsFromExt();
@@ -71,7 +71,7 @@ class Tx_Brainmonitor_Reports_Security extends Tx_Brainmonitor_Reports_Abstract
     private function getStartPageIdReport()
     {
         //id of start page; if null, rootline is not configured correctly
-        $db = Tx_Brainmonitor_Helper_Database::getInstance();
+        $db = Tx_T3monitor_Helper_Database::getInstance();
         $startRow = $db->getStartPage();
         $pageId = 0;
         $severity = self::ERROR;
@@ -130,7 +130,7 @@ class Tx_Brainmonitor_Reports_Security extends Tx_Brainmonitor_Reports_Abstract
                 if ((strpos($lKey, 'tx_reports_reports_status_') !== false
                     && $lKey != 'tx_reports_reports_status_status')
                     || $lKey == 'tx_install_report_installstatus') {
-                    $statusProviderInstance = Tx_Brainmonitor_Service_Compatibility::makeInstance($key);
+                    $statusProviderInstance = Tx_T3monitor_Service_Compatibility::makeInstance($key);
                     if ($statusProviderInstance instanceof tx_reports_StatusProvider) {
                         $group = strtolower(str_replace(
                             array('tx_reports_reports_status_', 'tx_install_report', 'status'), '', $key

@@ -32,17 +32,17 @@
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_Brainmonitor_Reports_SysLog extends Tx_Brainmonitor_Reports_Abstract
+class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
 {
     /**
      * Returns informations about the database tables
      *
-     * @param Tx_Brainmonitor_Reports_Reports $reportHandler
+     * @param Tx_T3monitor_Reports_Reports $reportHandler
      */
-    public function addReports(Tx_Brainmonitor_Reports_Reports $reportHandler)
+    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
         $info = array();
-        $db = Tx_Brainmonitor_Helper_Database::getInstance();
+        $db = Tx_T3monitor_Helper_Database::getInstance();
         $config = $this->getConfig();
         $minTstamp = (int) $config->getMinTstamp();
         $limit = '';

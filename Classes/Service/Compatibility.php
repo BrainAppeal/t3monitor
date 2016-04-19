@@ -27,7 +27,7 @@
 /**
  * This class is a copy of the tt_news class class.tx_ttnews_compatibility.php
  */
-class Tx_Brainmonitor_Service_Compatibility {
+class Tx_T3monitor_Service_Compatibility {
 	/**
 	 * @var boolean
 	 */
@@ -39,10 +39,10 @@ class Tx_Brainmonitor_Service_Compatibility {
 	protected $llxmlParser;
 
 	/**
-	 * @return Tx_Brainmonitor_Service_Compatibility
+	 * @return Tx_T3monitor_Service_Compatibility
 	 */
 	public static function getInstance() {
-		return self::makeInstance('Tx_Brainmonitor_Service_Compatibility');
+		return self::makeInstance('Tx_T3monitor_Service_Compatibility');
 	}
 
 	/**
@@ -50,7 +50,7 @@ class Tx_Brainmonitor_Service_Compatibility {
 	 */
 	public function __construct() {
 		if (class_exists('t3lib_utility_VersionNumber')) {
-			if (Tx_Brainmonitor_Service_Compatibility::int_from_ver(TYPO3_version) >= 6000000) {
+			if (Tx_T3monitor_Service_Compatibility::int_from_ver(TYPO3_version) >= 6000000) {
 				$this->isVersion6 = TRUE;
 			}
 		}
@@ -197,7 +197,7 @@ class Tx_Brainmonitor_Service_Compatibility {
             if (!($GLOBALS['TSFE'] instanceof \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController)) {
                 $pageId = (int) \TYPO3\CMS\Core\Utility\GeneralUtility::_GP('id');
                 if (empty($pageId)) {
-                    $db = Tx_Brainmonitor_Helper_Database::getInstance();
+                    $db = Tx_T3monitor_Helper_Database::getInstance();
                     $startRow = $db->getStartPage();
                     if (!empty($startRow)) {
                         $pageId = $startRow['uid'];

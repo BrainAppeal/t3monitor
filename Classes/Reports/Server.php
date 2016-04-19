@@ -32,14 +32,14 @@
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_Brainmonitor_Reports_Server extends Tx_Brainmonitor_Reports_Abstract
+class Tx_T3monitor_Reports_Server extends Tx_T3monitor_Reports_Abstract
 {
     /**
      * Create reports
      *
-     * @param Tx_Brainmonitor_Reports_Reports $reportHandler
+     * @param Tx_T3monitor_Reports_Reports $reportHandler
      */
-    public function addReports(Tx_Brainmonitor_Reports_Reports $reportHandler)
+    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
         $info = array();
         //System reports
@@ -68,7 +68,7 @@ class Tx_Brainmonitor_Reports_Server extends Tx_Brainmonitor_Reports_Abstract
         }
 
         $currentMysqlVersion = null;
-        $db = Tx_Brainmonitor_Helper_Database::getInstance();
+        $db = Tx_T3monitor_Helper_Database::getInstance();
         $resource = $db->getDatabaseConnection()->sql_query('SHOW VARIABLES LIKE \'version\';');
         if ($resource !== false) {
             $result = $db->getDatabaseConnection()->sql_fetch_row($resource);

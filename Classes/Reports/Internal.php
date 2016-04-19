@@ -32,16 +32,16 @@
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_Brainmonitor_Reports_Internal extends Tx_Brainmonitor_Reports_Abstract
+class Tx_T3monitor_Reports_Internal extends Tx_T3monitor_Reports_Abstract
 {
     /**
      * Create reports
      *
-     * @param Tx_Brainmonitor_Reports_Reports $reportHandler
+     * @param Tx_T3monitor_Reports_Reports $reportHandler
      */
-    public function addReports(Tx_Brainmonitor_Reports_Reports $reportHandler)
+    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
-        $comp = Tx_Brainmonitor_Service_Compatibility::getInstance();
+        $comp = Tx_T3monitor_Service_Compatibility::getInstance();
         $t3ver = $comp->int_from_ver(TYPO3_version);
         if ($t3ver >= 6000000) {
             $internalReports = array();

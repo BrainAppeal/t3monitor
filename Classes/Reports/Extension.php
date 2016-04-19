@@ -35,7 +35,7 @@ if (defined('PATH_t3lib') && file_exists(PATH_t3lib . 'class.t3lib_install.php')
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
+class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
 {
 
     /**
@@ -65,7 +65,7 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
      */
     private function init()
     {
-        $comp = Tx_Brainmonitor_Service_Compatibility::getInstance();
+        $comp = Tx_T3monitor_Service_Compatibility::getInstance();
         $t3ver = $comp->int_from_ver(TYPO3_version);
         if ($t3ver >= 6000000) {
             // Starting from TYPO3 6.1, the database will connect itself when
@@ -76,11 +76,11 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
         } elseif ($t3ver >= 4005000) {
             require_once(PATH_typo3 . '/sysext/em/classes/extensions/class.tx_em_extensions_list.php');
             require_once(PATH_typo3 . '/sysext/em/classes/extensions/class.tx_em_extensions_details.php');
-            $this->emList = Tx_Brainmonitor_Service_Compatibility::makeInstance('tx_em_Extensions_List');
-            $this->emDetails = Tx_Brainmonitor_Service_Compatibility::makeInstance('tx_em_Extensions_Details');
+            $this->emList = Tx_T3monitor_Service_Compatibility::makeInstance('tx_em_Extensions_List');
+            $this->emDetails = Tx_T3monitor_Service_Compatibility::makeInstance('tx_em_Extensions_Details');
         } else {
             require_once(PATH_typo3 . '/mod/tools/em/class.em_index.php');
-            $this->emList = Tx_Brainmonitor_Service_Compatibility::makeInstance('SC_mod_tools_em_index');
+            $this->emList = Tx_T3monitor_Service_Compatibility::makeInstance('SC_mod_tools_em_index');
 
             //@see SC_mod_tools_em_index::init
             // GLOBAL Paths
@@ -122,10 +122,10 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
     /**
      * Get reports for extensions that are installed in typo3conf/ext (local)
      *
-     * @param Tx_Brainmonitor_Reports_Reports $reportHandler
+     * @param Tx_T3monitor_Reports_Reports $reportHandler
      * @throws Exception
      */
-    public function addReports(Tx_Brainmonitor_Reports_Reports $reportHandler)
+    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
         global $TYPO3_LOADED_EXT;
         $loadedExtensions = & $TYPO3_LOADED_EXT;
@@ -167,6 +167,8 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
                     $iconFile = $extInfo['ext_icon'];
                 } elseif (in_array('ext_icon.gif', $extInfo['files'])) {
                     $iconFile = 'ext_icon.gif';
+                } elseif (in_array('ext_icon.png', $extInfo['files'])) {
+                    $iconFile = 'ext_icon.png';
                 }
                 $extReport['icon_file'] = $iconFile;
                 if ($showModifiedFiles) {
@@ -209,7 +211,7 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
             $where = 'type = 255 AND tstamp > ' . $minLoginTstamp
                 . ' AND tstamp < ' . $modTstamp;
 
-            $db = Tx_Brainmonitor_Helper_Database::getInstance();
+            $db = Tx_T3monitor_Helper_Database::getInstance();
             $loginList = $db->fetchList($select, $from, $where, $orderBy);
             krsort($loginList);
             $userList = array();
@@ -235,6 +237,7 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
         }
         return $userName;
     }
+
     /**
      * Helper function to prevent errors in xml when configuration array
      * has empty values, e.g.
@@ -269,7 +272,8 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
     {
         $currentMd5Array = $this->serverExtensionMD5array($extKey, $extInfo);
         $affectedFiles = array();
-        if (strcmp($emConf['_md5_values_when_last_written'], serialize($currentMd5Array))) {
+        if (!empty($emConf['_md5_values_when_last_written'])
+            && strcmp($emConf['_md5_values_when_last_written'], serialize($currentMd5Array))) {
             $lastWritten = unserialize($emConf['_md5_values_when_last_written']);
             $files = $this->findMD5ArrayDiff($currentMd5Array, $lastWritten);
             if (count($files)) {
@@ -282,12 +286,11 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
     /**
      * Creates a MD5-hash array over the current files in the extension
      *
-     * @param	string		Extension key
-     * @param	array		Extension information array
-     * @return	array		MD5-keys
+     * @param	string  $extKey Extension key
+     * @param	array   $conf   Extension information array
+     * @return	array   MD5-keys
      */
     private function serverExtensionMD5array($extKey, $conf) {
-        $md5Array = array();
         // TYPO3 < 6
         if ($this->emDetails !== null) {
             $md5Array = $this->emDetails->serverExtensionMD5array($extKey, $conf);
@@ -335,9 +338,9 @@ class Tx_Brainmonitor_Reports_Extension extends Tx_Brainmonitor_Reports_Abstract
     /**
      * Compares two arrays with MD5-hash values for analysis of which files has changed.
      *
-     * @param	array		Current values
-     * @param	array		Past values
-     * @return	array		Affected files
+     * @param	array   $current    Current values
+     * @param	array   $past       Past values
+     * @return	array   Affected files
      */
     private static function findMD5ArrayDiff($current, $past) {
         if (!is_array($current)) {

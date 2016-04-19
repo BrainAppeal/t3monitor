@@ -32,7 +32,7 @@
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_Brainmonitor_Reports_Reports
+class Tx_T3monitor_Reports_Reports
 {
     /**
      * Contains timer infos for different keys

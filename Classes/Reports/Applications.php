@@ -32,15 +32,15 @@
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_Brainmonitor_Reports_Applications extends Tx_Brainmonitor_Reports_Abstract
+class Tx_T3monitor_Reports_Applications extends Tx_T3monitor_Reports_Abstract
 {
 
     /**
      * Create reports
      *
-     * @param Tx_Brainmonitor_Reports_Reports $dataHandler
+     * @param Tx_T3monitor_Reports_Reports $dataHandler
      */
-    public function addReports(Tx_Brainmonitor_Reports_Reports $reportHandler)
+    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
         $info = array();
         $checkDirs = array(
