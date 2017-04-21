@@ -257,7 +257,7 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
      * @param array $array
      */
     private function removeEmptyKeys(&$array){
-        if (!empty($array)) {
+        if (!empty($array) && is_array($array)) {
             foreach ($array as $key => &$value) {
                 if (strlen($key) == 0) {
                     unset($array[$key]);
