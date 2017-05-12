@@ -69,13 +69,8 @@ class Tx_T3monitor_Reports_Server extends Tx_T3monitor_Reports_Abstract
 
         $currentMysqlVersion = null;
         $db = Tx_T3monitor_Helper_Database::getInstance();
-        $resource = $db->getDatabaseConnection()->sql_query('SHOW VARIABLES LIKE \'version\';');
-        if ($resource !== false) {
-            $result = $db->getDatabaseConnection()->sql_fetch_row($resource);
-            if (isset($result[1])) {
-                $currentMysqlVersion = $result[1];
-            }
-        } elseif(function_exists('mysql_get_client_info')){
+        $currentMysqlVersion = $db->getDatabaseVariable('version');
+        if (empty($currentMysqlVersion) && function_exists('mysql_get_client_info')){
             $currentMysqlVersion = mysql_get_client_info();
         }
         if (!empty($currentMysqlVersion)) {
