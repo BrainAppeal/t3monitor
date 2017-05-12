@@ -33,8 +33,9 @@ class Tx_T3monitor_Service_Compatibility {
 	 */
 	protected $isVersion6 = FALSE;
 
-	/**
-	 * @var t3lib_l10n_parser_Llxml
+    /** @noinspection PhpUndefinedClassInspection */
+    /**
+	 * @var t3lib_l10n_parser_Llxml|\TYPO3\CMS\Core\Localization\Parser\LocallangXmlParser
 	 */
 	protected $llxmlParser;
 
@@ -42,7 +43,9 @@ class Tx_T3monitor_Service_Compatibility {
 	 * @return Tx_T3monitor_Service_Compatibility
 	 */
 	public static function getInstance() {
-		return self::makeInstance('Tx_T3monitor_Service_Compatibility');
+	    /** @var Tx_T3monitor_Service_Compatibility $instance */
+	    $instance = self::makeInstance('Tx_T3monitor_Service_Compatibility');
+		return $instance;
 	}
 
 	/**
@@ -98,35 +101,40 @@ class Tx_T3monitor_Service_Compatibility {
 		return (string) intval($var) === (string) $var;
 	}
     public function array2xml(array $array, $NSprefix = '', $level = 0, $docTag = 'phparray') {
-        if (class_exists('t3lib_div')) {
-            return t3lib_div::array2xml($array, '', 0, 'xml');
-        } else {
+	    if (class_exists('\TYPO3\CMS\Core\Utility\GeneralUtility') && method_exists('\TYPO3\CMS\Core\Utility\GeneralUtility', 'array2xml')) {
             return  \TYPO3\CMS\Core\Utility\GeneralUtility::array2xml($array, $NSprefix, $level, $docTag);
+        } else {
+            /** @noinspection PhpUndefinedClassInspection */
+            return t3lib_div::array2xml($array, '', 0, 'xml');
         }
     }
     public function compat_version($verNumberStr) {
-        if (class_exists('t3lib_div')) {
-            return t3lib_div::compat_version($verNumberStr);
+
+        if (class_exists('\TYPO3\CMS\Core\Utility\VersionNumberUtility') && method_exists('\TYPO3\CMS\Core\Utility\VersionNumberUtility', 'convertVersionNumberToInteger')) {
+            return  \TYPO3\CMS\Core\Utility\VersionNumberUtility::convertVersionNumberToInteger(TYPO3_branch) >= \TYPO3\CMS\Core\Utility\VersionNumberUtility::convertVersionNumberToInteger($verNumberStr);
         } elseif (class_exists('\TYPO3\CMS\Core\Utility\GeneralUtility') && method_exists('\TYPO3\CMS\Core\Utility\GeneralUtility', 'compat_version')) {
             return  \TYPO3\CMS\Core\Utility\GeneralUtility::compat_version($verNumberStr);
         } else {
-            return  \TYPO3\CMS\Core\Utility\VersionNumberUtility::convertVersionNumberToInteger(TYPO3_branch) >= \TYPO3\CMS\Core\Utility\VersionNumberUtility::convertVersionNumberToInteger($verNumberStr);;
+            /** @noinspection PhpUndefinedClassInspection */
+            return t3lib_div::compat_version($verNumberStr);
         }
     }
 
     public function trimExplode($delim, $string, $removeEmptyValues = FALSE, $limit = 0) {
-        if (class_exists('t3lib_div')) {
-            return t3lib_div::trimExplode($delim, $string, $removeEmptyValues, $limit);
-        } else {
+        if (class_exists('\TYPO3\CMS\Core\Utility\GeneralUtility') && method_exists('\TYPO3\CMS\Core\Utility\GeneralUtility', 'trimExplode')) {
             return  \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode($delim, $string, $removeEmptyValues, $limit);
+        } else {
+            /** @noinspection PhpUndefinedClassInspection */
+            return t3lib_div::trimExplode($delim, $string, $removeEmptyValues, $limit);
         }
     }
 
     public function verifyFilenameAgainstDenyPattern($filename) {
-        if (class_exists('t3lib_div')) {
-            return t3lib_div::verifyFilenameAgainstDenyPattern($filename);
-        } else {
+        if (class_exists('\TYPO3\CMS\Core\Utility\GeneralUtility') && method_exists('\TYPO3\CMS\Core\Utility\GeneralUtility', 'verifyFilenameAgainstDenyPattern')) {
             return  \TYPO3\CMS\Core\Utility\GeneralUtility::verifyFilenameAgainstDenyPattern($filename);
+        } else {
+            /** @noinspection PhpUndefinedClassInspection */
+            return t3lib_div::verifyFilenameAgainstDenyPattern($filename);
         }
     }
 
@@ -143,12 +151,14 @@ class Tx_T3monitor_Service_Compatibility {
 		if ($this->isVersion6) {
 			return $this->getLlxmlParser()->getParsedData($fileRef, $langKey, $charset);
 		} else {
+            /** @noinspection PhpUndefinedClassInspection */
 			return t3lib_div::readLLXMLfile($fileRef, $langKey, $charset);
 		}
 	}
 
-	/**
-	 * @return t3lib_l10n_parser_Llxml
+	/** @noinspection PhpUndefinedClassInspection */
+    /**
+	 * @return t3lib_l10n_parser_Llxml|\TYPO3\CMS\Core\Localization\Parser\LocallangXmlParser
 	 */
 	protected function getLlxmlParser() {
 		if (!isset($this->llxmlParser)) {
@@ -183,10 +193,11 @@ class Tx_T3monitor_Service_Compatibility {
      */
     public static function makeInstance($className)
     {
-        if (class_exists('t3lib_div')) {
-            return t3lib_div::makeInstance($className);
-        } else {
+        if (class_exists('\TYPO3\CMS\Core\Utility\GeneralUtility') && method_exists('\TYPO3\CMS\Core\Utility\GeneralUtility', 'makeInstance')) {
             return \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance($className);
+        } else {
+            /** @noinspection PhpUndefinedClassInspection */
+            return t3lib_div::makeInstance($className);
         }
     }
 
