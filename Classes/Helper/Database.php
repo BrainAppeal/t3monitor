@@ -237,9 +237,10 @@ class Tx_T3monitor_Helper_Database
      */
     public function getDatabaseVariable($variableName)
     {
-        $resource = $this->getDatabaseConnection()->sql_query('SHOW VARIABLES LIKE \''.$variableName.'\';');
+        $db = $this->getDatabaseConnection();
+        $resource = $db->sql_query('SHOW VARIABLES LIKE \''.$variableName.'\';');
         if ($resource !== false) {
-            $result = $this->getDatabaseConnection()->sql_fetch_row($resource);
+            $result = $db->sql_fetch_row($resource);
             if (isset($result[1])) {
                 return $result[1];
             }
