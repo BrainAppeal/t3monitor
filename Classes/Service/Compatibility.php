@@ -107,8 +107,10 @@ class Tx_T3monitor_Service_Compatibility {
     public function compat_version($verNumberStr) {
         if (class_exists('t3lib_div')) {
             return t3lib_div::compat_version($verNumberStr);
-        } else {
+        } elseif (class_exists('\TYPO3\CMS\Core\Utility\GeneralUtility') && method_exists('\TYPO3\CMS\Core\Utility\GeneralUtility', 'compat_version')) {
             return  \TYPO3\CMS\Core\Utility\GeneralUtility::compat_version($verNumberStr);
+        } else {
+            return  \TYPO3\CMS\Core\Utility\VersionNumberUtility::convertVersionNumberToInteger(TYPO3_branch) >= \TYPO3\CMS\Core\Utility\VersionNumberUtility::convertVersionNumberToInteger($verNumberStr);;
         }
     }
 
