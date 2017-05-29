@@ -230,6 +230,26 @@ class Tx_T3monitor_Helper_Database
     }
 
     /**
+     * Return the requested database variable
+     *
+     * @param string $variableName
+     * @return string|null
+     */
+    public function getDatabaseVariable($variableName)
+    {
+        $db = $this->getDatabaseConnection();
+        $resource = $db->sql_query('SHOW VARIABLES LIKE \''.$variableName.'\';');
+        if ($resource !== false) {
+            $result = $db->sql_fetch_row($resource);
+            if (isset($result[1])) {
+                return $result[1];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @internal
      * @return \TYPO3\CMS\Core\Database\DatabaseConnection $database
      */
     public function getDatabaseConnection()
