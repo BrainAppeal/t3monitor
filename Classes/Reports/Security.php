@@ -71,7 +71,7 @@ class Tx_T3monitor_Reports_Security extends Tx_T3monitor_Reports_Abstract
     private function getStartPageIdReport()
     {
         //id of start page; if null, rootline is not configured correctly
-        $db = Tx_T3monitor_Helper_Database::getInstance();
+        $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
         $startRow = $db->getStartPage();
         $pageId = 0;
         $severity = self::ERROR;

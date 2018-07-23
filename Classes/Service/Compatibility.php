@@ -173,7 +173,8 @@ class Tx_T3monitor_Service_Compatibility {
     public function initLang()
     {
         $t3ver = $this->int_from_ver(TYPO3_version);
-        if ($t3ver >= 6000000) {
+        if ($t3ver >= 9000000) {
+        } else if ($t3ver >= 6000000 && $t3ver < 9000000) {
             require_once \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('lang') . 'Classes/LanguageService.php';
             $GLOBALS['LANG'] = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Lang\LanguageService');
             $GLOBALS['LANG']->init('en');
@@ -210,7 +211,7 @@ class Tx_T3monitor_Service_Compatibility {
             if (!($GLOBALS['TSFE'] instanceof \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController)) {
                 $pageId = (int) \TYPO3\CMS\Core\Utility\GeneralUtility::_GP('id');
                 if (empty($pageId)) {
-                    $db = Tx_T3monitor_Helper_Database::getInstance();
+                    $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
                     $startRow = $db->getStartPage();
                     if (!empty($startRow)) {
                         $pageId = $startRow['uid'];

@@ -31,7 +31,10 @@ if (class_exists('\TYPO3\CMS\Core\Utility\ExtensionManagementUtility')) {
     $tmpExtPath = t3lib_extMgm::extPath('t3monitor');
 }
 require_once $tmpExtPath . 'Classes/Helper/Config.php';
-require_once $tmpExtPath . 'Classes/Helper/Database.php';
+require_once $tmpExtPath . 'Classes/Helper/Database/DatabaseInterface.php';
+require_once $tmpExtPath . 'Classes/Helper/Database/Compatibility8Database.php';
+require_once $tmpExtPath . 'Classes/Helper/Database/Database.php';
+require_once $tmpExtPath . 'Classes/Helper/Database/DatabaseFactory.php';
 require_once $tmpExtPath . 'Classes/Helper/Encryption.php';
 require_once $tmpExtPath . 'Classes/Helper/Logger.php';
 require_once $tmpExtPath . 'Classes/Helper/Timer.php';
@@ -115,7 +118,7 @@ class Tx_T3monitor_Service_Dispatcher
         $secret = isset($params['secret']) ? $params['secret'] : '';
         $this->confirmKeysOrDie($secret, $logger);
 
-        $db = Tx_T3monitor_Helper_Database::getInstance();
+        $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
         if(!$db->isConnected()){
             die('ERROR: The current username, password or host was not '
                 . 'accepted when the connection to the database was '

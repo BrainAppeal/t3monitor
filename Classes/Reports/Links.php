@@ -43,7 +43,7 @@ class Tx_T3monitor_Reports_Links extends Tx_T3monitor_Reports_Abstract
     {
         $info = array();
         $table = 'tx_linkvalidator_link';
-        $db = Tx_T3monitor_Helper_Database::getInstance();
+        $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
         $tables = $db->getTablesInfo();
         if (isset($tables[$table])) {
             $select = '*';

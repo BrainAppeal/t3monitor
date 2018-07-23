@@ -261,7 +261,7 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
     {
         $severity = self::OK;
         $value = 'OK';
-        $db = Tx_T3monitor_Helper_Database::getInstance();
+        $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
         $where = 'username = ' . $db->fullQuoteStr('admin', 'be_users')
             . ' AND password = ' . $db->fullQuoteStr(md5('password'), 'be_users')
             . ' AND deleted = 0';

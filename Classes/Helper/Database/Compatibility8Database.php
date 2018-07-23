@@ -32,12 +32,12 @@
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_T3monitor_Helper_Database
+class Tx_T3monitor_Helper_Compatibility8Database implements Tx_T3monitor_Helper_DatabaseInterface
 {
     /**
      * Singleton instance
      *
-     * @var Tx_T3monitor_Helper_Database
+     * @var Tx_T3monitor_Helper_Compatibility8Database
      */
     private static $_instance = null;
     /**
@@ -72,10 +72,10 @@ class Tx_T3monitor_Helper_Database
                 \TYPO3\CMS\Frontend\Utility\EidUtility::connectDB();
             }
             $this->isConnected = true;
-        // >= TYPO3 4.3
+            // >= TYPO3 4.3
         } elseif($t3ver >= 4003000){
             $this->isConnected = tslib_eidtools::connectDB();
-        // <= TYPO3 4.2
+            // <= TYPO3 4.2
         } else {
             //If connection fails, die is called in t3lib_db::connectDB
             tslib_eidtools::connectDB();

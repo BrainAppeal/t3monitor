@@ -42,7 +42,7 @@ class Tx_T3monitor_Reports_Database extends Tx_T3monitor_Reports_Abstract
     public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
         $dbInfo = array();
-        $db = Tx_T3monitor_Helper_Database::getInstance();
+        $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
         $tables = $db->getTablesInfo();
         $collations = array();
         foreach($tables as $table => $tInfo){

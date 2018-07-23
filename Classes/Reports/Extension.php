@@ -211,7 +211,7 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
             $where = 'type = 255 AND tstamp > ' . $minLoginTstamp
                 . ' AND tstamp < ' . $modTstamp;
 
-            $db = Tx_T3monitor_Helper_Database::getInstance();
+            $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
             $loginList = $db->fetchList($select, $from, $where, $orderBy);
             krsort($loginList);
             $userList = array();
