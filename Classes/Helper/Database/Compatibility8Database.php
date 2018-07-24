@@ -56,7 +56,7 @@ class Tx_T3monitor_Helper_Compatibility8Database implements Tx_T3monitor_Helper_
     /**
      * Default constructor
      */
-    private function __construct()
+    public function __construct()
     {
         $this->init();
     }
