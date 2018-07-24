@@ -149,11 +149,18 @@ class Tx_T3monitor_Helper_Database implements Tx_T3monitor_Helper_DatabaseInterf
      */
     public function getTablesInfo()
     {
-        //TODO: FIX
-        $queryBuilder = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class)->getQueryBuilderForTable($from);
+        $cp = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class);
+        $defaultConnection = $cp->getConnectionByName(\TYPO3\CMS\Core\Database\ConnectionPool::DEFAULT_CONNECTION_NAME);
 
-        $db = $this->getDatabaseConnection();
-        $this->tableInfo = $db->admin_get_tables();
+        $queryBuilder = $defaultConnection->createQueryBuilder();
+        $queryBuilder->select('TABLE_NAME AS Table', 'TABLE_ROWS AS Rows', 'DATA_LENGTH AS Data_length')
+            ->from('information_schema.TABLES');
+        $tables = $queryBuilder->execute()->fetchAll();
+        $correctedTables = [];
+        foreach ($tables as $table) {
+            $correctedTables[$table['Table']] = $table;
+        }
+        $this->tableInfo = $correctedTables;
         return $this->tableInfo;
     }
 
@@ -227,30 +234,24 @@ class Tx_T3monitor_Helper_Database implements Tx_T3monitor_Helper_DatabaseInterf
 
     /**
      * Return the requested database variable
+     * In this case only returns server version, because its the only thing needed
      *
      * @param string $variableName
      * @return string|null
      */
     public function getDatabaseVariable($variableName)
     {
-        //TODO: FIX!
-        $db = $this->getDatabaseConnection();
-        $resource = $db->sql_query('SHOW VARIABLES LIKE \''.$variableName.'\';');
-        if ($resource !== false) {
-            $result = $db->sql_fetch_row($resource);
-            if (isset($result[1])) {
-                return $result[1];
-            }
-        }
-        return null;
+        $cp = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class);
+        $defaultConnection = $cp->getConnectionByName(\TYPO3\CMS\Core\Database\ConnectionPool::DEFAULT_CONNECTION_NAME);
+        $result = $defaultConnection->getServerVersion();
+        return $result;
     }
 
     /**
      * @internal
-     * @return \TYPO3\CMS\Core\Database\DatabaseConnection $database
      */
     public function getDatabaseConnection()
     {
-        return $GLOBALS['TYPO3_DB'];
+        return $GLOBALS['TYPO3_DB']; //NOT USED HERE
     }
 }
