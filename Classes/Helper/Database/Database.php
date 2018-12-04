@@ -180,9 +180,10 @@ class Tx_T3monitor_Helper_Database implements Tx_T3monitor_Helper_DatabaseInterf
         $queryBuilder = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class)->getQueryBuilderForTable($from);
         $queryBuilder->resetRestrictions();
         $select = explode(', ', $select);
-        $statement = $queryBuilder
-            ->select(...$select)
-            ->from($from)
+        $statement = $queryBuilder;
+//          ->select(...$select) // Cant use this because we need to ensure that the extension also works with < PHP5.6
+        call_user_func_array(array($statement,'select'), $select);
+        $statement->from($from)
             ->where($where)
             ->execute();
         $result = $statement->fetch();
@@ -207,11 +208,13 @@ class Tx_T3monitor_Helper_Database implements Tx_T3monitor_Helper_DatabaseInterf
         $queryBuilder->resetRestrictions();
         $select = explode(', ', $select);
         $orderBy = explode(' ', $orderBy);
-        $statement = $queryBuilder
-            ->select(...$select)
-            ->from($from)
-            ->where($where)
-            ->orderBy(...$orderBy);
+        $statement = $queryBuilder;
+//        ->select(...$select) // Cant use this because we need to ensure that the extension also works with < PHP5.6
+        call_user_func_array(array($statement,'select'), $select);
+        $statement->from($from)
+            ->where($where);
+//          ->orderBy(...$orderBy); // Cant use this because we need to ensure that the extension also works with < PHP5.6
+        call_user_func_array(array($statement,'orderBy'), $orderBy);
         if ($limit !== '') {
             $statement->setMaxResults($limit);
         }
