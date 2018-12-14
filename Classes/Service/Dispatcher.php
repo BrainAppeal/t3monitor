@@ -33,7 +33,9 @@ if (class_exists('\TYPO3\CMS\Core\Utility\ExtensionManagementUtility')) {
 require_once $tmpExtPath . 'Classes/Helper/Config.php';
 require_once $tmpExtPath . 'Classes/Helper/Database/DatabaseInterface.php';
 require_once $tmpExtPath . 'Classes/Helper/Database/Compatibility8Database.php';
-require_once $tmpExtPath . 'Classes/Helper/Database/Database.php';
+if (PHP_VERSION_ID >= 50500) {
+    require_once $tmpExtPath . 'Classes/Helper/Database/Database.php';
+}
 require_once $tmpExtPath . 'Classes/Helper/Database/DatabaseFactory.php';
 require_once $tmpExtPath . 'Classes/Helper/Encryption.php';
 require_once $tmpExtPath . 'Classes/Helper/Logger.php';
