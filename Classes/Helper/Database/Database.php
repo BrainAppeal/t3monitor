@@ -26,7 +26,8 @@
  * ************************************************************* */
 /**
  * Helper class for database access. Implements singleton pattern.
- * (t3lib_Singleton interface not used for compatibility with TYPO3 4.2)
+ * (t3lib_Singleton interface not used for compatibility with TYPO3 4.2
+ * This class required PHP >= 5.5
  *
  * @category TYPO3
  * @package T3Monitor
