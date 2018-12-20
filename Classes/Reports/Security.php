@@ -91,8 +91,7 @@ class Tx_T3monitor_Reports_Security extends Tx_T3monitor_Reports_Abstract
      * (Does not have to be installed)
      * Requires TYPO3 version >= 4.3
      *
-     * @return array Array with report infos;
-     *  returns false if reports Extension was not found
+     * @return array|bool Array with report infos; returns false if reports Extension was not found
      */
     protected function getReportsFromExt()
     {
