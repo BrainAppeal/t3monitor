@@ -43,7 +43,7 @@ class Tx_T3monitor_Reports_Internal extends Tx_T3monitor_Reports_Abstract
     {
         $comp = Tx_T3monitor_Service_Compatibility::getInstance();
         $t3ver = $comp->int_from_ver(TYPO3_version);
-        if ($t3ver >= 6000000) {
+        if ($t3ver >= 6000000 && \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('reports')) {
             $internalReports = array();
             $status = array();
             $reportClasses = array();

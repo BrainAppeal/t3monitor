@@ -174,6 +174,7 @@ class Tx_T3monitor_Service_Compatibility {
     {
         $t3ver = $this->int_from_ver(TYPO3_version);
         if ($t3ver >= 9000000) {
+            $GLOBALS['LANG'] = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Lang\LanguageService');
         } else if ($t3ver >= 6000000 && $t3ver < 9000000) {
             require_once \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('lang') . 'Classes/LanguageService.php';
             $GLOBALS['LANG'] = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Lang\LanguageService');
