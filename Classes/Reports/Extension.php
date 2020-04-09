@@ -25,6 +25,9 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
+use TYPO3\CMS\Core\Package\PackageManager;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+
 if (defined('PATH_t3lib') && file_exists(PATH_t3lib . 'class.t3lib_install.php')) {
     require_once(PATH_t3lib . 'class.t3lib_install.php');
 }
@@ -65,8 +68,7 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
      */
     private function init()
     {
-        $comp = Tx_T3monitor_Service_Compatibility::getInstance();
-        $t3ver = $comp->int_from_ver(TYPO3_version);
+        $t3ver = Tx_T3monitor_Service_Compatibility::getTypo3Version(true);
         if ($t3ver >= 6000000) {
             // Starting from TYPO3 6.1, the database will connect itself when
             // needed
@@ -74,12 +76,12 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
                 \TYPO3\CMS\Frontend\Utility\EidUtility::initTCA();
             }
         } elseif ($t3ver >= 4005000) {
-            require_once(PATH_typo3 . '/sysext/em/classes/extensions/class.tx_em_extensions_list.php');
-            require_once(PATH_typo3 . '/sysext/em/classes/extensions/class.tx_em_extensions_details.php');
+            require_once(Tx_T3monitor_Service_Compatibility::getPathTypo3() . '/sysext/em/classes/extensions/class.tx_em_extensions_list.php');
+            require_once(Tx_T3monitor_Service_Compatibility::getPathTypo3() . '/sysext/em/classes/extensions/class.tx_em_extensions_details.php');
             $this->emList = Tx_T3monitor_Service_Compatibility::makeInstance('tx_em_Extensions_List');
             $this->emDetails = Tx_T3monitor_Service_Compatibility::makeInstance('tx_em_Extensions_Details');
         } else {
-            require_once(PATH_typo3 . '/mod/tools/em/class.em_index.php');
+            require_once(Tx_T3monitor_Service_Compatibility::getPathTypo3() . '/mod/tools/em/class.em_index.php');
             $this->emList = Tx_T3monitor_Service_Compatibility::makeInstance('SC_mod_tools_em_index');
 
             //@see SC_mod_tools_em_index::init
@@ -128,7 +130,22 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
     public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
         global $TYPO3_LOADED_EXT;
-        $loadedExtensions = & $TYPO3_LOADED_EXT;
+        $loadedExtensions = [];
+        if (Tx_T3monitor_Service_Compatibility::isTypo3VersionGte10()) {
+            $packageManager = GeneralUtility::makeInstance(PackageManager::class);
+            foreach ($packageManager->getActivePackages() as $package) {
+                $loadedExtensions[] = [
+                    'key' => $package->getPackageKey(),
+                    'path' => $package->getPackagePath(),
+                    'type' => strpos($package->getPackagePath(), 'sysext' . DIRECTORY_SEPARATOR) === false ? 'L' : 'S',
+                    
+                ];
+            }
+        } elseif ($GLOBALS['TYPO3_LOADED_EXT']) {
+            $loadedExtensions = $GLOBALS['TYPO3_LOADED_EXT'];
+        } elseif ($TYPO3_LOADED_EXT) {
+            $loadedExtensions = $TYPO3_LOADED_EXT;
+        }
         $extensions = $this->getInstalledExtensions();
         $config = $this->getConfig();
         $excludeList = $config->getExcludeExtList();
@@ -136,7 +153,8 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
         $noExcludes = empty($excludeList);
 
         $extOutput = array();
-        $extPath = PATH_site . 'typo3conf/ext/';
+        $basePath = Tx_T3monitor_Service_Compatibility::getPublicPath();
+        $extPath = $basePath . 'typo3conf/ext/';
         // Generate output
         foreach (array_keys($extensions) as $extKey) {
             //Only add info for installed extension in typo3conf/ext (L=local)

@@ -82,7 +82,7 @@ class Tx_T3monitor_Helper_Logger
     {
         $this->enabled = false;
         if (!empty($logfile)) {
-            $absPath = PATH_site . $logfile;
+            $absPath = Tx_T3monitor_Service_Compatibility::getPublicPath() . $logfile;
             $this->absLogfile = $absPath;
             $absDir = dirname($absPath);
             $this->enabled = is_dir($absDir) && is_writable($absDir);
@@ -90,7 +90,7 @@ class Tx_T3monitor_Helper_Logger
             if ($this->enabled) {
                 if (file_exists($this->absLogfile)) {
                     if ((filesize($this->absLogfile) > 1000000)) {
-                        $fileEnd = strtolower(substr(strrchr($this->absLogfile, "."), 0));
+                        $fileEnd = strtolower(substr(strrchr($this->absLogfile, '.'), 0));
                         $newFileEnd = '_' . strftime('%d-%m-%Y_%H-%M-%S') . $fileEnd;
                         $oldLogName = str_replace($fileEnd, $newFileEnd, $this->absLogfile);
                         if (rename($this->absLogfile, $oldLogName)) {

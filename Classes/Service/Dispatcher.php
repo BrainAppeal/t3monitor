@@ -84,6 +84,31 @@ class Tx_T3monitor_Service_Dispatcher
     }
 
     /**
+     * Main method to dump a file
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @return \Psr\Http\Message\ResponseInterface
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
+     * @throws \TYPO3\CMS\Core\Resource\Exception\FileDoesNotExistException
+     * @throws \UnexpectedValueException
+     */
+    public function processRequest($request)
+    {
+        $data = $this->generateData();
+        $xml = Tx_T3monitor_Service_Compatibility::getInstance()->array2xml($data, '', 0, 'xml');
+        $crypt = new Tx_T3monitor_Helper_Encryption();
+        $encKey = $this->config->getEncryptionKey(true);
+        $encStr = $crypt->encrypt($encKey, $xml);
+        /*header('Content-type: text/plain; charset=utf-8');
+        print($encStr);
+        exit();*/
+        $response = new \TYPO3\CMS\Core\Http\Response();
+        $response->getBody()->write($encStr);
+        return $response;
+    }
+
+    /**
      * Initializes the class properties
      */
     private function init()
@@ -92,24 +117,30 @@ class Tx_T3monitor_Service_Dispatcher
 
         $comp->initTsfe();
         // Config
-        $extConfig = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
+        $t3ver = Tx_T3monitor_Service_Compatibility::getTypo3Version(true);
+        if ($t3ver >= 9000000) {
+            $extConfig = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Configuration\ExtensionConfiguration::class)->get($this->extKey);
+        } else {
+            $extConfig = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
+        }
         $this->config = new Tx_T3monitor_Helper_Config();
         $this->config->setEncryptionKey($extConfig['encryption_key']);
         $this->config->setLogfilePath('');
         $excludeExtList = explode(',', $extConfig['exclude_local']);
         $this->config->setExcludeExtList($excludeExtList);
 
-        if (!defined(PATH_typo3)) {
+        if (!defined('PATH_typo3') && !Tx_T3monitor_Service_Compatibility::isTypo3VersionGte10()) {
             define('PATH_typo3', PATH_site . TYPO3_mainDir);
         }
         if (!is_object($GLOBALS['LANG'])) {
             $comp->initLang();
         }
     }
+
     /**
      * Runs the dispatcher and sends the encrypted report data
      */
-    public function run()
+    public function generateData()
     {
         $logFile = $this->config->getLogfilePath();
         $logger = new Tx_T3monitor_Helper_Logger($logFile);
@@ -180,8 +211,15 @@ class Tx_T3monitor_Service_Dispatcher
 
         $timer->stop('main');
         $reportHandler->add('timer', $timer->getSummary());
-        $cmsData = $reportHandler->toArray();
-        $this->sendOutputAsXmlData($cmsData);
+        return $reportHandler->toArray();
+    }
+
+    /**
+     * Runs the dispatcher and sends the encrypted report data
+     */
+    public function run()
+    {
+        $this->sendOutputAsXmlData($this->generateData());
     }
     /**
      * Confirms that a valid secret and encryption key are configured and the
@@ -227,8 +265,6 @@ class Tx_T3monitor_Service_Dispatcher
         exit();
     }
 }
-if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/t3monitor/Classes/Service/Dispatcher.php']) {
-    include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/t3monitor/Classes/Service/Dispatcher.php']);
-}
-$WDOG = Tx_T3monitor_Service_Compatibility::makeInstance('Tx_T3monitor_Service_Dispatcher');
-$WDOG->run();
+//if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/t3monitor/Classes/Service/Dispatcher.php']) {
+//    include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/t3monitor/Classes/Service/Dispatcher.php']);
+//}

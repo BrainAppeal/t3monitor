@@ -44,7 +44,6 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
      */
     public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
-        $reportsInfo = array();
         $reportsInfo = $this->getReportsFromExt();
         //If reports from parent class are empty, create reports manually
         if (empty($reportsInfo)) {
@@ -52,7 +51,7 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
             $reportsInfo['_install'] = $this->getInstallReports();
             $reportsInfo['typo3'] = array(
                 'Typo3Version' => array(
-                    'value' => TYPO3_version,
+                    'value' => Tx_T3monitor_Service_Compatibility::getTypo3Version(),
                     'severity' => -2,
                 ),
             );
@@ -93,8 +92,9 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
         );
         $value = 'Writable';
         $severity = self::OK;
+        $basePath = Tx_T3monitor_Service_Compatibility::getPublicPath();
         foreach ($checkWritable as $relPath => $requirementLevel) {
-            $absPath = PATH_site . $relPath;
+            $absPath = $basePath . $relPath;
             if (!@is_dir($absPath) || !is_writable($absPath)) {
                 $severity = $requirementLevel;
                 if ($severity == self::ERROR) {
@@ -109,10 +109,10 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
         );
         $value = 'Update Complete';
         $severity = self::OK;
-        if (!Tx_T3monitor_Service_Compatibility::getInstance()->compat_version(TYPO3_branch)) {
-            $value = 'Update Incomplete';
-            $severity = self::WARNING;
-        }
+//        if (!Tx_T3monitor_Service_Compatibility::getInstance()->compat_version(TYPO3_branch)) {
+//            $value = 'Update Incomplete';
+//            $severity = self::WARNING;
+//        }
         $info['RemainingUpdates'] = array(
             'value' => $value,
             'severity' => $severity,
@@ -140,10 +140,10 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
         $severity = self::OK;
         $memoryLimit = ini_get('memory_limit');
         if (!empty($memoryLimit)) {
-            $mlBytes = $this->getBytesFromSizeMeasurement($memoryLimit);
-            if ($mlBytes < $this->getBytesFromSizeMeasurement(TYPO3_REQUIREMENTS_MINIMUM_PHP_MEMORY_LIMIT)) {
+            $mlBytes = self::getBytesFromSizeMeasurement($memoryLimit);
+            if ($mlBytes < self::getBytesFromSizeMeasurement(TYPO3_REQUIREMENTS_MINIMUM_PHP_MEMORY_LIMIT)) {
                 $severity = self::ERROR;
-            } elseif ($mlBytes < $this->getBytesFromSizeMeasurement(TYPO3_REQUIREMENTS_RECOMMENDED_PHP_MEMORY_LIMIT)) {
+            } elseif ($mlBytes < self::getBytesFromSizeMeasurement(TYPO3_REQUIREMENTS_RECOMMENDED_PHP_MEMORY_LIMIT)) {
                 $severity = self::WARNING;
             }
         }
@@ -155,7 +155,7 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
         $value = 'Disabled';
         $registerGlobals = trim(ini_get('register_globals'));
         // can't reliably check for 'on', therefore checking for the oposite 'off', '', or 0
-        if (!empty($registerGlobals) && strtolower($registerGlobals) != 'off') {
+        if (!empty($registerGlobals) && strtolower($registerGlobals) !== 'off') {
             $value = 'Enabled';
             $severity = self::ERROR;
         }
@@ -285,7 +285,8 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
     {
         $value = 'Disabled';
         $severity = self::OK;
-        $enableInstallToolFile = PATH_site . 'typo3conf/ENABLE_INSTALL_TOOL';
+        $basePath = Tx_T3monitor_Service_Compatibility::getPublicPath();
+        $enableInstallToolFile = $basePath . 'typo3conf/ENABLE_INSTALL_TOOL';
         $enableInstallToolFileExists = is_file($enableInstallToolFile);
         if ($enableInstallToolFileExists) {
             if (trim(file_get_contents($enableInstallToolFile)) === 'KEEP_FILE') {
@@ -331,7 +332,7 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
         $value = 'Disabled';
         $severity = self::OK;
         $safeMode = strtolower(ini_get('safe_mode'));
-        if ($safeMode == 'on' || $safeMode === 1) {
+        if ($safeMode === 'on' || $safeMode === 1) {
             $value = 'Enabled';
             $severity = self::WARNING;
         }

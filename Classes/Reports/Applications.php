@@ -43,9 +43,10 @@ class Tx_T3monitor_Reports_Applications extends Tx_T3monitor_Reports_Abstract
     public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
         $info = array();
+        $cmsPublicPath = Tx_T3monitor_Service_Compatibility::getPublicPath();
         $checkDirs = array(
-            PATH_site . 'piwik',
-            dirname(PATH_site) . '/piwik',
+            $cmsPublicPath . 'piwik',
+            dirname($cmsPublicPath) . '/piwik',
         );
         foreach ($checkDirs as $dir) {
             $vFile = $dir . '/core/Version.php';

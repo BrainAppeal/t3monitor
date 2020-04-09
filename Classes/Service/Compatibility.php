@@ -24,6 +24,8 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
+
+
 /**
  * This class is a copy of the tt_news class class.tx_ttnews_compatibility.php
  */
@@ -53,7 +55,7 @@ class Tx_T3monitor_Service_Compatibility {
 	 */
 	public function __construct() {
 		if (class_exists('t3lib_utility_VersionNumber')) {
-			if (Tx_T3monitor_Service_Compatibility::int_from_ver(TYPO3_version) >= 6000000) {
+			if (Tx_T3monitor_Service_Compatibility::getTypo3Version(true) >= 6000000) {
 				$this->isVersion6 = TRUE;
 			}
 		}
@@ -88,10 +90,21 @@ class Tx_T3monitor_Service_Compatibility {
 	 *
 	 * @param string $versionNumber Version number on format x.x.x
 	 * @return integer Integer version of version number (where each part can count to 999)
+     * @deprecated use self::convertVersionNumberToInteger($versionNumber) instead
 	 */
 	public function int_from_ver($versionNumber) {
-		$versionParts = explode('.', $versionNumber);
-		return intval(((int) $versionParts[0] . str_pad((int) $versionParts[1], 3, '0', STR_PAD_LEFT)) . str_pad((int) $versionParts[2], 3, '0', STR_PAD_LEFT));
+		return self::convertVersionNumberToInteger($versionNumber);
+    }
+
+    /**
+     * Returns an integer from a three part version number, eg '4.12.3' -> 4012003
+     *
+     * @param string $versionNumber Version number on format x.x.x
+     * @return integer Integer version of version number (where each part can count to 999)
+     */
+    public static function convertVersionNumberToInteger($versionNumber) {
+        $versionParts = explode('.', $versionNumber);
+        return intval(((int) $versionParts[0] . str_pad((int) $versionParts[1], 3, '0', STR_PAD_LEFT)) . str_pad((int) $versionParts[2], 3, '0', STR_PAD_LEFT));
     }
 
 	public function testInt($var) {
@@ -172,15 +185,17 @@ class Tx_T3monitor_Service_Compatibility {
      */
     public function initLang()
     {
-        $t3ver = $this->int_from_ver(TYPO3_version);
-        if ($t3ver >= 9000000) {
+        $t3ver = self::getTypo3Version(true);
+        if ($t3ver >= 10000000){
+            $GLOBALS['LANG'] = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Core\Localization\LanguageService');
+        } else if ($t3ver >= 9000000) {
             $GLOBALS['LANG'] = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Lang\LanguageService');
         } else if ($t3ver >= 6000000 && $t3ver < 9000000) {
             require_once \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('lang') . 'Classes/LanguageService.php';
             $GLOBALS['LANG'] = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Lang\LanguageService');
             $GLOBALS['LANG']->init('en');
         } else {
-            require_once(PATH_typo3.'sysext/lang/lang.php');
+            require_once(self::getPathTypo3().'sysext/lang/lang.php');
             $GLOBALS['LANG'] = t3lib_div::makeInstance('language');
             $GLOBALS['LANG']->init('en');
         }
@@ -197,18 +212,19 @@ class Tx_T3monitor_Service_Compatibility {
     {
         if (class_exists('\TYPO3\CMS\Core\Utility\GeneralUtility') && method_exists('\TYPO3\CMS\Core\Utility\GeneralUtility', 'makeInstance')) {
             return \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance($className);
-        } else {
-            /** @noinspection PhpUndefinedClassInspection */
-            return t3lib_div::makeInstance($className);
         }
+        /** @noinspection PhpUndefinedClassInspection */
+        return t3lib_div::makeInstance($className);
     }
 
     public function initTsfe()
     {
         global $TYPO3_CONF_VARS;
         // $GLOBALS['TSFE']->sys_page only needed for TYPO3 >= 6.x
-        $t3ver = $this->int_from_ver(TYPO3_version);
-        if ($t3ver >= 6000000) {
+        $t3ver = self::getTypo3Version(true);
+        if ($t3ver >= 10000000) {
+            $this->initializeTsfeGte10();
+        } elseif ($t3ver >= 6000000) {
             if (!($GLOBALS['TSFE'] instanceof \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController)) {
                 $pageId = (int) \TYPO3\CMS\Core\Utility\GeneralUtility::_GP('id');
                 if (empty($pageId)) {
@@ -222,12 +238,104 @@ class Tx_T3monitor_Service_Compatibility {
                 $GLOBALS['TSFE'] = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Frontend\\Controller\\TypoScriptFrontendController', $TYPO3_CONF_VARS, $pageId, 0, true);
 				if (!isset($GLOBALS['TSFE']->config['config'])) {
 					$GLOBALS['TSFE']->config['config'] = array();
-				};
+				}
             }
             if (!($GLOBALS['TSFE']->sys_page instanceof \TYPO3\CMS\Frontend\Page\PageRepository)) {
                 $GLOBALS['TSFE']->sys_page = self::makeInstance('TYPO3\\CMS\\Frontend\\Page\\PageRepository');
             }
         }
+    }
+
+    /**
+     * @return void
+     * @SuppressWarnings(PHPMD.Superglobals)
+     * @throws Exception
+     */
+    protected function initializeTsfeGte10()
+    {
+        $site = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Site\Entity\Site::class, 1, 1, []);
+        $siteLanguage = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(
+            \TYPO3\CMS\Core\Site\Entity\SiteLanguage::class,
+            0,
+            'en-EN',
+            new \TYPO3\CMS\Core\Http\Uri('https://domain.org/page'),
+            []
+        );
+        $pageArguments = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Routing\PageArguments::class, 1, 0, []);
+        $nullFrontend = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Cache\Frontend\NullFrontend::class, 'pages');
+        $cacheManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Cache\CacheManager::class);
+        try {
+            $cacheManager->registerCache($nullFrontend);
+        } catch (\Exception $exception) {
+            unset($exception);
+        }
+        $GLOBALS['TSFE'] = new \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController(
+            \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Context\Context::class),
+            $site,
+            $siteLanguage,
+            $pageArguments
+        );
+        $GLOBALS['TSFE']->fe_user = new \TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication();
+    }
+
+    /**
+     * PATH_site is deprecated in TYPO3 v10
+     * => Use :php:`Environment::getPublicPath() . '/'` instead
+     * @return string
+     */
+    public static function getPublicPath()
+    {
+        if (self::isTypo3VersionGte10()) {
+            return \TYPO3\CMS\Core\Core\Environment::getPublicPath() . '/';
+        }
+        return PATH_site;
+    }
+
+    /**
+     * PATH_site is deprecated in TYPO3 v10
+     * => Use :php:`Environment::getPublicPath() . '/'` instead
+     * @return string
+     */
+    public static function getPathTypo3()
+    {
+        if (self::isTypo3VersionGte10()) {
+            return self::getPublicPath() . 'typo3/';
+        }
+        return PATH_typo3;
+    }
+
+    /**
+     * TYPO3_version is deprecated in TYPO3 v10
+     * => Use \TYPO3\CMS\Core\Information\Typo3Version instead
+     * @param bool $returnIntFromVer Convert version number to integer
+     * @return string|int
+     */
+    public static function getTypo3Version($returnIntFromVer = false)
+    {
+        if (class_exists('\TYPO3\CMS\Core\Information\Typo3Version')) {
+            $cmsVersion = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Information\Typo3Version::class);
+            return $returnIntFromVer ? self::convertVersionNumberToInteger($cmsVersion->getVersion()) : $cmsVersion->getVersion();
+        }
+        return $returnIntFromVer ? self::convertVersionNumberToInteger(TYPO3_version) : TYPO3_version;
+    }
+
+    /**
+     * TYPO3_branch is deprecated in TYPO3 v10
+     * => Use \TYPO3\CMS\Core\Information\Typo3Version instead
+     * @return string
+     */
+    public static function getTypo3Branch()
+    {
+        if (self::isTypo3VersionGte10()) {
+            $cmsVersion = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Information\Typo3Version::class);
+            return $cmsVersion->getBranch();
+        }
+        return TYPO3_branch;
+    }
+
+    public static function isTypo3VersionGte10()
+    {
+        return self::getTypo3Version(true) >= 10000000;
     }
 }
 ?>

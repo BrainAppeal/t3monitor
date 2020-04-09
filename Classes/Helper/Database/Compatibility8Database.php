@@ -62,8 +62,7 @@ class Tx_T3monitor_Helper_Compatibility8Database implements Tx_T3monitor_Helper_
     }
     private function init()
     {
-        $comp = Tx_T3monitor_Service_Compatibility::getInstance();
-        $t3ver = $comp->int_from_ver(TYPO3_version);
+        $t3ver = Tx_T3monitor_Service_Compatibility::getTypo3Version(true);
         if ($t3ver >= 6000000) {
             // Starting from TYPO3 6.1, the database will connect itself when needed
             if ($t3ver < 6001000) {

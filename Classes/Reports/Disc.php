@@ -42,7 +42,7 @@ class Tx_T3monitor_Reports_Disc extends Tx_T3monitor_Reports_Abstract
     public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
         $info = array();
-        $basePath = PATH_site;
+        $basePath = Tx_T3monitor_Service_Compatibility::getPublicPath();
         $totalDiskSpace = disk_total_space($basePath);
         $freeDiskSpace = disk_free_space($basePath);
         $usedDiskSpace = $totalDiskSpace - $freeDiskSpace;
@@ -104,7 +104,12 @@ class Tx_T3monitor_Reports_Disc extends Tx_T3monitor_Reports_Abstract
     private function dirSize($directory)
     {
         $size = 0;
-        if(!(TYPO3_OS != 'WIN')){
+        if (class_exists('\\TYPO3\\CMS\\Core\\Core\\Environment')) {
+            $osIsWindows = \TYPO3\CMS\Core\Core\Environment::isWindows();
+        } else {
+            $osIsWindows = TYPO3_OS != 'WIN';
+        }
+        if(!$osIsWindows){
             //Returns size in Kilobytes
             $result = explode("\t", exec("du --summarize ".$directory) , 2);
             if(count($result) > 1 && $result[1] == $directory){

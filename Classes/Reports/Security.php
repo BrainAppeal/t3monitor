@@ -157,7 +157,8 @@ class Tx_T3monitor_Reports_Security extends Tx_T3monitor_Reports_Abstract
             $this->loadPrefixes[] = 'tx_' . $key . '_report';
             $sysExtPath = 'typo3/sysext/';
             $relPath = $sysExtPath . $key . '/';
-            $extPath = PATH_site . $relPath;
+            $basePath = Tx_T3monitor_Service_Compatibility::getPublicPath();
+            $extPath = $basePath . $relPath;
             if (!file_exists($extPath))
                 return false;
 
