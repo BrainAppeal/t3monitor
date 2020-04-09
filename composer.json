@@ -5,13 +5,14 @@
     "keywords": [
         "TYPO3",
         "extension",
-        "t3monitor"
+        "t3monitor",
+        "t3monitoring"
     ],
     "homepage": "https://www.t3monitor.de",
     "authors": [{
         "name": "Brain Appeal GmbH",
         "role": "Developer",
-        "homepage": "http://www.brain-appeal.com"
+        "homepage": "https://www.brain-appeal.com"
     }],
     "license": [
         "GPL-2.0+"
