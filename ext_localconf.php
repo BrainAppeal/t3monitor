@@ -8,7 +8,7 @@ if (class_exists('\TYPO3\CMS\Core\Utility\ExtensionManagementUtility')) {
     $eidInclude = t3lib_extMgm::extPath('t3monitor').'Classes/Service/EidRunner.php';
 }
 if (class_exists('\TYPO3\CMS\Core\Information\Typo3Version')) {
-    $eidInclude = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('t3monitor') . 'Classes/Service/Dispatcher.php';
+    $eidInclude = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('t3monitor') . 'Classes/Service/EidRunner.php';
     $cmsVersion = (string) \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Information\Typo3Version::class);
     if (\TYPO3\CMS\Core\Utility\VersionNumberUtility::convertVersionNumberToInteger($cmsVersion) > 10000000) {
         require_once \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('t3monitor') . 'Classes/Service/Dispatcher.php';
