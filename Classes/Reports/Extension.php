@@ -134,11 +134,10 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
         if (Tx_T3monitor_Service_Compatibility::isTypo3VersionGte10()) {
             $packageManager = GeneralUtility::makeInstance(PackageManager::class);
             foreach ($packageManager->getActivePackages() as $package) {
-                $loadedExtensions[] = [
+                $loadedExtensions[$package->getPackageKey()] = [
                     'key' => $package->getPackageKey(),
                     'path' => $package->getPackagePath(),
                     'type' => strpos($package->getPackagePath(), 'sysext' . DIRECTORY_SEPARATOR) === false ? 'L' : 'S',
-                    
                 ];
             }
         } elseif ($GLOBALS['TYPO3_LOADED_EXT']) {
