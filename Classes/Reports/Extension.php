@@ -155,6 +155,14 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
         $basePath = Tx_T3monitor_Service_Compatibility::getPublicPath();
         $extPath = $basePath . 'typo3conf/ext/';
         // Generate output
+        if (array_key_exists(0, $loadedExtensions)) {
+            $loadedExtensionsWithKeys = [];
+            foreach ($loadedExtensions as $loadedExtension) {
+                $loadedExtensionsWithKeys[$loadedExtension['key']] = $loadedExtension;
+            }
+            $loadedExtensions = $loadedExtensionsWithKeys;
+        }
+        $reportHandler->add('installed_extensions', $extOutput);
         foreach (array_keys($extensions) as $extKey) {
             //Only add info for installed extension in typo3conf/ext (L=local)
             //Skip all extensions in exclude list
@@ -205,7 +213,6 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
                 $extOutput[] = $extReport;
             }
         }
-        $reportHandler->add('installed_extensions', $extOutput);
     }
     /**
      * Find the user who most likely installed this extension. This cannot be
