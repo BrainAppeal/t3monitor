@@ -187,12 +187,17 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
                 $extReport['installedBy'] = $this->findUserWhoInstalledExtension($absExtPath);
                 $this->removeEmptyKeys($extReport['constraints']);
                 $iconFile = '';
-                if (isset($extInfo['ext_icon'])) {
+                $staticIconRelPath = 'Resources/Public/Icons/Extension.svg';
+                if (file_exists($absExtPath . $staticIconRelPath)) {
+                    $iconFile = $staticIconRelPath;
+                } elseif (isset($extInfo['ext_icon'])) {
                     $iconFile = $extInfo['ext_icon'];
-                } elseif (in_array('ext_icon.gif', $extInfo['files'])) {
-                    $iconFile = 'ext_icon.gif';
-                } elseif (in_array('ext_icon.png', $extInfo['files'])) {
-                    $iconFile = 'ext_icon.png';
+                } elseif (!empty($extInfo['files'])) {
+                    if (in_array('ext_icon.gif', $extInfo['files'])) {
+                        $iconFile = 'ext_icon.gif';
+                    } elseif (in_array('ext_icon.png', $extInfo['files'])) {
+                        $iconFile = 'ext_icon.png';
+                    }
                 }
                 $extReport['icon_file'] = $iconFile;
                 if ($showModifiedFiles) {
