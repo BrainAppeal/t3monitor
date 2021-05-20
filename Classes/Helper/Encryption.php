@@ -132,8 +132,8 @@ class Tx_T3monitor_Helper_Encryption
         $out = '';
         $cryptLen = strlen($key);
         for ($a = 0, $n = strlen($string); $a < $n; $a++) {
-            $xorVal = ord($key{($a % $cryptLen)});
-            $out.= chr(ord($string{$a}) ^ $xorVal);
+            $xorVal = ord($key[($a % $cryptLen)]);
+            $out.= chr(ord($string[$a]) ^ $xorVal);
         }
 
         $str = base64_encode($out);
@@ -163,8 +163,8 @@ class Tx_T3monitor_Helper_Encryption
             if ($cryptLen > 0) {
                 $out = '';
                 for ($a = 0; $a < $strLen; $a++) {
-                    $xorVal = ord($key{($a % $cryptLen)});
-                    $out .= chr(ord($dcrStr{$a}) ^ $xorVal);
+                    $xorVal = ord($key[($a % $cryptLen)]);
+                    $out .= chr(ord($dcrStr[$a]) ^ $xorVal);
                 }
                 $dcrStr = $out;
             }
