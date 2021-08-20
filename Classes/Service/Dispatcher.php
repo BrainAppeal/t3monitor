@@ -192,9 +192,15 @@ class Tx_T3monitor_Service_Dispatcher
         if(isset($params['reports'])) {
             $enabledReports = explode(',', trim(strip_tags($params['reports'])));
         }
+        $t3ver = Tx_T3monitor_Service_Compatibility::getTypo3Version(true);
+        if ($t3ver >= 9000000 && in_array('install_tool', $enabledReports, false)) {
+            $tmpExtPath = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('t3monitor');
+            require_once $tmpExtPath . 'Classes/Reports/InstallTool.php';
+            $reports['install_tool'] = 'Tx_T3monitor_Reports_InstallTool';
+        }
         $reportHandler = new Tx_T3monitor_Reports_Reports();
         foreach($reports as $key => $className){
-            if(in_array($key, $enabledReports)){
+            if(in_array($key, $enabledReports, false)){
                 $timer->start($key);
                 $reportObj = Tx_T3monitor_Service_Compatibility::makeInstance($className);
                 $reportObj->setConfig($this->config);

@@ -52,7 +52,6 @@ class Tx_T3monitor_Reports_Security extends Tx_T3monitor_Reports_Abstract
      */
     public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
-        $reportsInfo = array();
         $reportsInfo = $this->getReportsFromExt();
         //Extend typo3 system reports with additional reports
         $this->addAdditonalReports($reportsInfo);

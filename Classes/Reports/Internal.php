@@ -25,6 +25,8 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
+use TYPO3\CMS\Core\Localization\LanguageService;
+
 /**
  * Report class for server.
  *
@@ -65,7 +67,7 @@ class Tx_T3monitor_Reports_Internal extends Tx_T3monitor_Reports_Abstract
                 'EnvironmentStatusReport' => 'system',
             );
             foreach ($intallFiles as $file) {
-                if (strpos($file, '.php') !== false) {
+                if (strpos($file, '.') !== 0 && strpos($file, '.php') !== false) {
                     $fileName = str_replace( '.php', '', $file);
                     if (isset($mapKeys[$fileName])) {
                         $key = $mapKeys[$fileName];
@@ -74,6 +76,11 @@ class Tx_T3monitor_Reports_Internal extends Tx_T3monitor_Reports_Abstract
                     }
                     $reportClasses[$key][] = 'TYPO3\\CMS\\Install\\Report\\' . $fileName;
                 }
+            }
+            // Fix missing translations in \TYPO3\CMS\Reports\Report\Status\Typo3Status
+            $languageService = $this->getLanguageService();
+            if (null !== $languageService && method_exists($languageService, 'includeLLFile')) {
+                $this->getLanguageService()->includeLLFile('EXT:reports/Resources/Private/Language/locallang_reports.xlf');
             }
             foreach ($reportClasses as $statusProviderId => $reportClassNames) {
                 foreach ($reportClassNames as $reportClass) {
@@ -105,5 +112,13 @@ class Tx_T3monitor_Reports_Internal extends Tx_T3monitor_Reports_Abstract
             }
             $reportHandler->add('reports', $internalReports);
         }
+    }
+
+    /**
+     * @return LanguageService
+     */
+    protected function getLanguageService()
+    {
+        return $GLOBALS['LANG'];
     }
 }

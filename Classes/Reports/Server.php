@@ -90,6 +90,10 @@ class Tx_T3monitor_Reports_Server extends Tx_T3monitor_Reports_Abstract
             'value' => ini_get('post_max_size'),
             'severity' => -2,
         );
+        $configuration['maxInputVars'] = array(
+            'value' => ini_get('max_input_vars'),
+            'severity' => -2,
+        );
 
         if ($isExtended) {
             $configuration['allowUrlFopen'] = array(
