@@ -51,6 +51,10 @@ class Tx_T3monitor_Reports_InstallTool extends Tx_T3monitor_Reports_Abstract
             'database' => $this->getDatabaseSchemaUpdates(),
             'wizardStates' => $this->getUpdateWizardStates(),
         ];
+        if ($_SERVER['REMOTE_ADDR'] == '109.90.104.82') {
+            echo '<pre>$info: '.print_r($info, true).'</pre>';
+            die('TEST');//TODO: DEBUG
+        }
         $reportHandler->add('install_tool', $info);
     }
 
@@ -86,7 +90,33 @@ class Tx_T3monitor_Reports_InstallTool extends Tx_T3monitor_Reports_Abstract
             unset($e);
         }
 
-        return $schemaUpdates;
+        return $this->fixArrayXmlKeyNames($schemaUpdates);
+    }
+
+    /**
+     * Replace md5 keys from array (array will be converted to XML later and XML tag names must start with letter or underscore)
+     *
+     * @param array $data
+     * @return array
+     */
+    private function fixArrayXmlKeyNames($data) {
+        if (is_array($data)) {
+            $keys = array_keys($data);
+            foreach ($keys as $key) {
+                if (is_array($data[$key])) {
+                    $data[$key] = $this->fixArrayXmlKeyNames($data[$key]);
+                }
+                if (preg_match('/^(\d+).*/', $key, $matches)) {
+                    $newKey = 'a' . $key;
+                    if (strlen($newKey) > 20) {
+                        $newKey = substr($newKey, 0, 20);
+                    }
+                    $data[$newKey] = $data[$key];
+                    unset($data[$key]);
+                }
+            }
+        }
+        return $data;
     }
 
     /**
