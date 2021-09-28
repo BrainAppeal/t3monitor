@@ -69,33 +69,21 @@ class Tx_T3monitor_Reports_InstallTool extends Tx_T3monitor_Reports_Abstract
         $sqlStatements = $sqlReader->getCreateTableStatementArray($sqlReader->getTablesDefinitionString());
         $schemaUpdates = [];
         try {
-            $suggestions['add'] = $schemaMigrator->getUpdateSuggestions($sqlStatements);
-            $suggestions['dropRename'] = $schemaMigrator->getUpdateSuggestions($sqlStatements, true);
+            $addCreateChange = $schemaMigrator->getUpdateSuggestions($sqlStatements);
             // Aggregate the per-connection statements into one flat array
-            $schemaUpdates['add'] = [];
+            $schemaUpdates['add'] = array_merge_recursive(...array_values($addCreateChange));
+        } catch (\Exception $e) {
+            unset($e);
+        }
 
-            foreach ($suggestions['add'] as $connectionName => $connectionUpdates) {
-                foreach ($connectionUpdates as $groupName => $groupStatements) {
-                    $schemaUpdates['add'][$groupName] = [];
-                    foreach ($groupStatements as $statement) {
-                        $schemaUpdates['add'][$groupName][] = $statement;
-                    }
-                }
-            }
-
-            $schemaUpdates['remove'] = [];
-            foreach ($suggestions['dropRename'] as $connectionName => $connectionUpdates) {
-                foreach ($connectionUpdates as $groupName => $groupStatements) {
-                    $schemaUpdates['remove'][$groupName] = [];
-                    foreach ($groupStatements as $statement) {
-                        $schemaUpdates['remove'][$groupName][] = $statement;
-                    }
-                }
-            }
-        } catch (\Doctrine\DBAL\Schema\SchemaException $e) {
-        } catch (\Doctrine\DBAL\DBALException $e) {
-        } catch (\TYPO3\CMS\Core\Database\Schema\Exception\StatementException $e) {
-        } catch (\TYPO3\CMS\Core\Database\Schema\Exception\UnexpectedSignalReturnValueTypeException $e) {
+        $sqlStatements = $sqlReader->getCreateTableStatementArray($sqlReader->getTablesDefinitionString());
+        // Difference from current to expected
+        try {
+            $dropRename = $schemaMigrator->getUpdateSuggestions($sqlStatements, true);
+            // Aggregate the per-connection statements into one flat array
+            $schemaUpdates['remove'] = array_merge_recursive(...array_values($dropRename));
+        } catch (\Exception $e) {
+            unset($e);
         }
 
         return $schemaUpdates;
