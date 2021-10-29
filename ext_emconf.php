@@ -31,7 +31,7 @@ $EM_CONF['t3monitor'] = array(
 	'constraints' => array(
 		'depends' => array(
 			'php' => '5.3.0-0.0.0',
-			'typo3' => '4.5.0-10.9.99',
+			'typo3' => '4.5.0-11.5.99',
 		),
 		'conflicts' => array(
 		),

@@ -51,10 +51,6 @@ class Tx_T3monitor_Reports_InstallTool extends Tx_T3monitor_Reports_Abstract
             'database' => $this->getDatabaseSchemaUpdates(),
             'wizardStates' => $this->getUpdateWizardStates(),
         ];
-        if ($_SERVER['REMOTE_ADDR'] == '109.90.104.82') {
-            echo '<pre>$info: '.print_r($info, true).'</pre>';
-            die('TEST');//TODO: DEBUG
-        }
         $reportHandler->add('install_tool', $info);
     }
 
@@ -152,9 +148,14 @@ class Tx_T3monitor_Reports_InstallTool extends Tx_T3monitor_Reports_Abstract
             if ($updateObject instanceof ConfirmableInterface) {
                 $upgradeWizardStates[$shortIdentifier]['confirmable'] = true;
             }
-            $markedAsDone = $upgradeWizardsService->isWizardDone($shortIdentifier);
-            if ($markedAsDone || !$updateObject->updateNecessary()) {
+            try {
+                $markedAsDone = $upgradeWizardsService->isWizardDone($shortIdentifier);
+                if ($markedAsDone || !$updateObject->updateNecessary()) {
+                    $upgradeWizardStates[$shortIdentifier]['done'] = true;
+                }   
+            } catch (\RuntimeException $e) {
                 $upgradeWizardStates[$shortIdentifier]['done'] = true;
+                $upgradeWizardStates[$shortIdentifier]['_error'] = $e->getMessage();
             }
         }
 

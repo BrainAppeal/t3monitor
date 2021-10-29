@@ -143,7 +143,9 @@ class Tx_T3monitor_Service_Compatibility {
     }
 
     public function verifyFilenameAgainstDenyPattern($filename) {
-        if (class_exists('\TYPO3\CMS\Core\Utility\GeneralUtility') && method_exists('\TYPO3\CMS\Core\Utility\GeneralUtility', 'verifyFilenameAgainstDenyPattern')) {
+        if (class_exists(\TYPO3\CMS\Core\Resource\Security\FileNameValidator::class)) {
+            \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Resource\Security\FileNameValidator::class)->isValid((string)$filename);
+        } elseif (class_exists('\TYPO3\CMS\Core\Utility\GeneralUtility') && method_exists('\TYPO3\CMS\Core\Utility\GeneralUtility', 'verifyFilenameAgainstDenyPattern')) {
             return  \TYPO3\CMS\Core\Utility\GeneralUtility::verifyFilenameAgainstDenyPattern($filename);
         } else {
             /** @noinspection PhpUndefinedClassInspection */
@@ -223,7 +225,7 @@ class Tx_T3monitor_Service_Compatibility {
         // $GLOBALS['TSFE']->sys_page only needed for TYPO3 >= 6.x
         $t3ver = self::getTypo3Version(true);
         if ($t3ver >= 10000000) {
-            $this->initializeTsfeGte10();
+            $this->initializeTsfeGte10($t3ver);
         } elseif ($t3ver >= 6000000) {
             if (!($GLOBALS['TSFE'] instanceof \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController)) {
                 $pageId = (int) \TYPO3\CMS\Core\Utility\GeneralUtility::_GP('id');
@@ -251,7 +253,7 @@ class Tx_T3monitor_Service_Compatibility {
      * @SuppressWarnings(PHPMD.Superglobals)
      * @throws Exception
      */
-    protected function initializeTsfeGte10()
+    protected function initializeTsfeGte10(int $t3ver)
     {
         $site = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Site\Entity\Site::class, 1, 1, []);
         $siteLanguage = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(
@@ -269,13 +271,26 @@ class Tx_T3monitor_Service_Compatibility {
         } catch (\Exception $exception) {
             unset($exception);
         }
-        $GLOBALS['TSFE'] = new \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController(
-            \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Context\Context::class),
-            $site,
-            $siteLanguage,
-            $pageArguments
-        );
-        $GLOBALS['TSFE']->fe_user = new \TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication();
+
+        $context = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Context\Context::class);
+        $feUserAuth = new \TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication();
+        if ($t3ver >= 11000000) {
+            $GLOBALS['TSFE'] = new \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController(
+                $context,
+                $site,
+                $siteLanguage,
+                $pageArguments,
+                $feUserAuth
+            );
+        } else {
+            $GLOBALS['TSFE'] = new \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController(
+                $context,
+                $site,
+                $siteLanguage,
+                $pageArguments
+            );
+            $GLOBALS['TSFE']->fe_user = $feUserAuth;
+        }
     }
 
     /**
