@@ -150,16 +150,45 @@ class Tx_T3monitor_Helper_Database implements Tx_T3monitor_Helper_DatabaseInterf
      */
     public function getTablesInfo()
     {
+        /** @var \TYPO3\CMS\Core\Database\ConnectionPool $cp */
         $cp = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class);
         $defaultConnection = $cp->getConnectionByName(\TYPO3\CMS\Core\Database\ConnectionPool::DEFAULT_CONNECTION_NAME);
-
-        $queryBuilder = $defaultConnection->createQueryBuilder();
-        $queryBuilder->select('TABLE_NAME AS Table', 'TABLE_ROWS AS Rows', 'DATA_LENGTH AS Data_length')
-            ->from('information_schema.TABLES');
-        $tables = $queryBuilder->execute()->fetchAll();
+        $database = $defaultConnection->getDatabase();
         $correctedTables = [];
-        foreach ($tables as $table) {
-            $correctedTables[$table['Table']] = $table;
+        $hasCollationField = false;
+        $queryBuilder = $defaultConnection->createQueryBuilder();
+        try {
+            $queryBuilder->select('*')
+                ->from('information_schema.TABLES');
+            $tables = $queryBuilder->execute()->fetchAll();
+        } catch (Exception $e) {
+            $tables = [];
+        }
+        if (!empty($tables)) {
+            $firstTable = current($tables);
+            $hasCollationField = array_key_exists('TABLE_COLLATION', $firstTable);
+            foreach ($tables as $table) {
+                // TABLE_NAME AS Table', 'TABLE_ROWS AS Rows', 'DATA_LENGTH AS Data_length
+                if ($table['TABLE_SCHEMA'] === $database && $table['TABLE_TYPE'] === 'BASE TABLE') {
+                    $correctedTables[$table['TABLE_NAME']] = [
+                        'name' => $table['TABLE_NAME'],
+                        'rows' => (int) $table['TABLE_ROWS'],
+                        'data_length' => $table['DATA_LENGTH'] ? $table['DATA_LENGTH'] : 0,
+                        'collation' => $table['TABLE_COLLATION'] ? $table['TABLE_COLLATION'] : '',
+                        'engine' => $table['ENGINE'] ? $table['ENGINE'] : '',
+                    ];
+                }
+            }
+        }
+        if (!$hasCollationField && method_exists($defaultConnection, 'getSchemaManager')
+            && null !== $schemaManager = $defaultConnection->getSchemaManager()) {
+            $tableInfoList = $schemaManager->listTables();
+            foreach ($tableInfoList as $tableInfo) {
+                $name = $tableInfo->getName();
+                $correctedTables[$name]['name'] = $name;
+                $correctedTables[$name]['collation'] = $tableInfo->getOption('collation');
+                $correctedTables[$name]['engine'] = $tableInfo->getOption('engine');
+            }
         }
         $this->tableInfo = $correctedTables;
         return $this->tableInfo;

@@ -35,7 +35,7 @@
 class Tx_T3monitor_Reports_Database extends Tx_T3monitor_Reports_Abstract
 {
     /**
-     * Returns informations about the database tables
+     * Returns information about the database tables
      *
      * @param Tx_T3monitor_Reports_Reports $reportHandler
      */
@@ -46,12 +46,14 @@ class Tx_T3monitor_Reports_Database extends Tx_T3monitor_Reports_Abstract
         $tables = $db->getTablesInfo();
         $collations = array();
         foreach($tables as $table => $tInfo){
-            $collation = $tInfo['Collation'];
-            $dbInfo[$table] = array(
-                'rows' => $tInfo['Rows'],
-                'data_length' => $tInfo['Data_length'],
-                'collation' => $collation,
-            );
+            $collation = strtolower($tInfo['collation']);
+            $dbInfo[$table] = $tInfo;
+            if (!array_key_exists('rows', $dbInfo[$table])) {
+                $dbInfo[$table]['rows'] = 0;
+            }
+            if (!array_key_exists('data_length', $dbInfo[$table])) {
+                $dbInfo[$table]['data_length'] = 0;
+            }
             $collations[$collation] = 1;
         }
         $reportHandler->add('database', $dbInfo);

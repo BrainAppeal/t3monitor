@@ -335,7 +335,11 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
             $fileUtility = $objectManager->get($objectName);
             $excludePattern = $GLOBALS['TYPO3_CONF_VARS']['EXT']['excludeForPackaging'];
 
-            $extensionPath = $fileUtility->getAbsoluteExtensionPath($extKey);
+            if (method_exists($fileUtility, 'getExtensionDir')) {
+                $extensionPath = $fileUtility->getExtensionDir($extKey);
+            } else {
+                $extensionPath = $fileUtility->getAbsoluteExtensionPath($extKey);
+            }
             // Add trailing slash to the extension path, getAllFilesAndFoldersInPath explicitly requires that.
             $extensionPath = \TYPO3\CMS\Core\Utility\PathUtility::sanitizeTrailingSeparator($extensionPath);
             // Get all the files of the extension, but exclude the ones specified in the excludePattern
