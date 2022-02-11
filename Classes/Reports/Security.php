@@ -24,6 +24,10 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
+
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Reports\StatusProviderInterface;
+
 /**
  * Report class for security. Creates status reports similar to
  * "reports" system extension
@@ -94,19 +98,39 @@ class Tx_T3monitor_Reports_Security extends Tx_T3monitor_Reports_Abstract
      */
     protected function getReportsFromExt()
     {
-        $this->loadPrefixes = array('tx_reports_status');
-        $autoloads = $this->initExtAutoloads();
-        if(empty($autoloads)) return false;
-        $statusProviders = $this->initExtStatusProviders($autoloads);
         $reportsInfo = array();
-        foreach ($statusProviders as $group => $provider) {
-            $reportsInfo[$group] = array();
-            $statusObj = $provider->getStatus();
-            foreach ($statusObj as $sKey => $sObj) {
-                $reportsInfo[$group][$sKey] = array(
-                    'value' => $sObj->getValue(),
-                    'severity' => $sObj->getSeverity(),
-                );
+        // TYPO3 >= 10.4
+        if (!empty($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['reports']['tx_reports']['status']['providers'])) {
+            foreach ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['reports']['tx_reports']['status']['providers'] as $group => $statusProvidersList) {
+                foreach ($statusProvidersList as $statusProvider) {
+                    $statusProviderInstance = Tx_T3monitor_Service_Compatibility::makeInstance($statusProvider);
+                    if ($statusProviderInstance instanceof StatusProviderInterface) {
+                        $statusObj = $statusProviderInstance->getStatus();
+                        foreach ($statusObj as $sKey => $sObj) {
+                            $reportsInfo[$group][$sKey] = array(
+                                'value' => $sObj->getValue(),
+                                'severity' => $sObj->getSeverity(),
+                            );
+                        }
+                    }
+                }
+            }
+        } else {
+            $this->loadPrefixes = array('tx_reports_status');
+            $autoloads = $this->initExtAutoloads();
+            if(empty($autoloads)) {
+                return false;
+            }
+            $statusProviders = $this->initExtStatusProviders($autoloads);
+            foreach ($statusProviders as $group => $provider) {
+                $reportsInfo[$group] = array();
+                $statusObj = $provider->getStatus();
+                foreach ($statusObj as $sKey => $sObj) {
+                    $reportsInfo[$group][$sKey] = array(
+                        'value' => $sObj->getValue(),
+                        'severity' => $sObj->getSeverity(),
+                    );
+                }
             }
         }
         return $reportsInfo;
@@ -158,8 +182,9 @@ class Tx_T3monitor_Reports_Security extends Tx_T3monitor_Reports_Abstract
             $relPath = $sysExtPath . $key . '/';
             $basePath = Tx_T3monitor_Service_Compatibility::getPublicPath();
             $extPath = $basePath . $relPath;
-            if (!file_exists($extPath))
-                return false;
+            if (!file_exists($extPath)) {
+                continue;
+            }
 
             //reports extension is not set in $TYPO3_LOADED_EXT even when installed
             if (!isset($TYPO3_LOADED_EXT[$key])) {

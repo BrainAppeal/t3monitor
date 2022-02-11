@@ -215,20 +215,24 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
 
         $value = 'OK';
         $severity = self::OK;
-        $fileDenyPattern = $GLOBALS['TYPO3_CONF_VARS']['BE']['fileDenyPattern'];
-        $compatibilityObject = Tx_T3monitor_Service_Compatibility::getInstance();
         if (!defined('FILE_DENY_PATTERN_DEFAULT')) {
             // TYPO3 >= 11.5 => \TYPO3\CMS\Core\Resource\Security\FileNameValidator::DEFAULT_FILE_DENY_PATTERN
             $defaultFileDenyPattern = '\\.(php[3-8]?|phpsh|phtml|pht|phar|shtml|cgi)(\\..*)?$|\\.pl$|^\\.htaccess$';
         } else {
             $defaultFileDenyPattern = constant('FILE_DENY_PATTERN_DEFAULT');
         }
-        $defaultParts = $compatibilityObject->trimExplode('|', $defaultFileDenyPattern, TRUE);
-        $givenParts = $compatibilityObject->trimExplode('|', $fileDenyPattern, TRUE);
-        $result = array_intersect($defaultParts, $givenParts);
-        if ($defaultParts !== $result) {
-            $value = 'Insecure';
-            $severity = self::ERROR;
+        $compatibilityObject = Tx_T3monitor_Service_Compatibility::getInstance();
+        if (isset($GLOBALS['TYPO3_CONF_VARS']['BE']['fileDenyPattern'])) {
+            $fileDenyPattern = $GLOBALS['TYPO3_CONF_VARS']['BE']['fileDenyPattern'];
+            $defaultParts = $compatibilityObject->trimExplode('|', $defaultFileDenyPattern, TRUE);
+            $givenParts = $compatibilityObject->trimExplode('|', $fileDenyPattern, TRUE);
+            $missingParts = array_diff($defaultParts, $givenParts);
+            if (!empty($missingParts)) {
+                $value = 'Insecure';
+                $severity = self::ERROR;
+            }
+        } else {
+            $fileDenyPattern = $defaultFileDenyPattern;
         }
         $info['fileDenyPattern'] = array(
             'value' => $value,
