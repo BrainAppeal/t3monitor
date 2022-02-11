@@ -61,11 +61,11 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
         if (empty($reportsInfo['system'])) {
             $reportsInfo['system'] = $this->getSystemReports();
         }
-        if (empty($reportsInfo['system'])) {
-            $reportsInfo['system'] = $this->getSecurityReports();
+        if (empty($reportsInfo['security'])) {
+            $reportsInfo['security'] = $this->getSecurityReports();
         }
         if (empty($reportsInfo['configuration'])) {
-            $reportsInfo['configuration'] = $this->getSecurityReports();
+            $reportsInfo['configuration'] = $this->getConfigurationReports();
         }
         //Extend typo3 system reports with additional reports
         $this->addAdditonalReports($reportsInfo);
