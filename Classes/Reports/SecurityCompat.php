@@ -45,9 +45,11 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
     public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
         $reportsInfo = $this->getReportsFromExt();
-        //If reports from parent class are empty, create reports manually
         if (empty($reportsInfo)) {
             $reportsInfo = array();
+        }
+        //If reports from parent class are empty, create reports manually
+        if (empty($reportsInfo['typo3'])) {
             $reportsInfo['_install'] = $this->getInstallReports();
             $reportsInfo['typo3'] = array(
                 'Typo3Version' => array(
@@ -55,9 +57,15 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
                     'severity' => -2,
                 ),
             );
+        }
+        if (empty($reportsInfo['system'])) {
             $reportsInfo['system'] = $this->getSystemReports();
-            $reportsInfo['security'] = $this->getSecurityReports();
-            $reportsInfo['configuration'] = $this->getConfigurationReports();
+        }
+        if (empty($reportsInfo['system'])) {
+            $reportsInfo['system'] = $this->getSecurityReports();
+        }
+        if (empty($reportsInfo['configuration'])) {
+            $reportsInfo['configuration'] = $this->getSecurityReports();
         }
         //Extend typo3 system reports with additional reports
         $this->addAdditonalReports($reportsInfo);
