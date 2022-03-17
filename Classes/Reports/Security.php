@@ -25,9 +25,6 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Reports\StatusProviderInterface;
-
 /**
  * Report class for security. Creates status reports similar to
  * "reports" system extension
@@ -100,11 +97,12 @@ class Tx_T3monitor_Reports_Security extends Tx_T3monitor_Reports_Abstract
     {
         $reportsInfo = array();
         // TYPO3 >= 10.4
-        if (!empty($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['reports']['tx_reports']['status']['providers'])) {
+        if (!empty($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['reports']['tx_reports']['status']['providers'])
+            && interface_exists(\TYPO3\CMS\Reports\StatusProviderInterface::class)) {
             foreach ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['reports']['tx_reports']['status']['providers'] as $group => $statusProvidersList) {
                 foreach ($statusProvidersList as $statusProvider) {
                     $statusProviderInstance = Tx_T3monitor_Service_Compatibility::makeInstance($statusProvider);
-                    if ($statusProviderInstance instanceof StatusProviderInterface) {
+                    if (is_a($statusProviderInstance, \TYPO3\CMS\Reports\StatusProviderInterface::class)) {
                         $statusObj = $statusProviderInstance->getStatus();
                         foreach ($statusObj as $sKey => $sObj) {
                             $reportsInfo[$group][$sKey] = array(
