@@ -133,6 +133,12 @@ class Tx_T3monitor_Reports_InstallTool extends Tx_T3monitor_Reports_Abstract
             }
             /** @var UpgradeWizardInterface $upgradeWizard */
             $updateObject = $objectManager->get($className);
+            // Prevent exception for Update wizards, that use the deprecated \TYPO3\CMS\Install\Updates\AbstractUpdate
+            if (interface_exists(TYPO3\CMS\Install\Updates\ChattyInterface::class)
+                && is_a($updateObject, TYPO3\CMS\Install\Updates\ChattyInterface::class, true)) {
+                $output = new \Symfony\Component\Console\Output\NullOutput();
+                $updateObject->setOutput($output);
+            }
             $shortIdentifier = $updateObject->getIdentifier();
             $upgradeWizardStates[$shortIdentifier] = [
                 //'wizard' => $updateObject,
@@ -152,7 +158,7 @@ class Tx_T3monitor_Reports_InstallTool extends Tx_T3monitor_Reports_Abstract
                 $markedAsDone = $upgradeWizardsService->isWizardDone($shortIdentifier);
                 if ($markedAsDone || !$updateObject->updateNecessary()) {
                     $upgradeWizardStates[$shortIdentifier]['done'] = true;
-                }   
+                }
             } catch (\RuntimeException $e) {
                 $upgradeWizardStates[$shortIdentifier]['done'] = true;
                 $upgradeWizardStates[$shortIdentifier]['_error'] = $e->getMessage();
