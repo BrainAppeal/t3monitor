@@ -12,7 +12,7 @@
 
 $EM_CONF['t3monitor'] = array(
 	'title' => 'T3Monitor',
-	'description' => 'Monitors TYPO3 installation for updates and security issues (Requires an account on https://www.t3monitor.de)',
+	'description' => 'Monitors TYPO3 installation for updates and security issues (Requires an account on www.t3monitor.de)',
 	'category' => 'misc',
 	'author' => 'T3Monitor Team',
 	'author_email' => 'feedback@t3monitor.de',
