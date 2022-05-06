@@ -12,13 +12,13 @@
 
 $EM_CONF['t3monitor'] = array(
 	'title' => 'T3Monitor',
-	'description' => 'Monitors TYPO3 installation for updates and security issues (Requires an account on http://www.t3monitor.de)',
+	'description' => 'Monitors TYPO3 installation for updates and security issues (Requires an account on www.t3monitor.de)',
 	'category' => 'misc',
 	'author' => 'T3Monitor Team',
 	'author_email' => 'feedback@t3monitor.de',
 	'author_company' => 'Brain Appeal GmbH',
 	'shy' => '',
-	'version' => '1.2.8',
+	'version' => '1.2.9',
 	'priority' => '',
 	'module' => '',
 	'state' => 'stable',
