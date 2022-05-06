@@ -199,6 +199,7 @@ class Tx_T3monitor_Service_Dispatcher
             $reports['install_tool'] = 'Tx_T3monitor_Reports_InstallTool';
         }
         $reportHandler = new Tx_T3monitor_Reports_Reports();
+        $exceptions = [];
         foreach($reports as $key => $className){
             if(in_array($key, $enabledReports, false)){
                 $timer->start($key);
@@ -207,10 +208,17 @@ class Tx_T3monitor_Service_Dispatcher
                 try {
                     $reportObj->addReports($reportHandler);
                 } catch (Exception $e) {
-                    die($e->getMessage());
+                    $exceptions[$e->getCode()] = array(
+                        'value' => $e->getMessage(),
+                        'severity' => 2,
+                    );
+                    unset($e);
                 }
                 $timer->stop($key);
             }
+        }
+        if (!empty($exceptions)) {
+            $reportHandler->add('exceptions', $exceptions);
         }
         $siteName = $GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'];
         $reportHandler->add('site_name', $siteName);

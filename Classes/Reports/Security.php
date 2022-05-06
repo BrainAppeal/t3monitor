@@ -101,15 +101,24 @@ class Tx_T3monitor_Reports_Security extends Tx_T3monitor_Reports_Abstract
             && interface_exists(\TYPO3\CMS\Reports\StatusProviderInterface::class)) {
             foreach ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['reports']['tx_reports']['status']['providers'] as $group => $statusProvidersList) {
                 foreach ($statusProvidersList as $statusProvider) {
-                    $statusProviderInstance = Tx_T3monitor_Service_Compatibility::makeInstance($statusProvider);
-                    if (is_a($statusProviderInstance, \TYPO3\CMS\Reports\StatusProviderInterface::class)) {
-                        $statusObj = $statusProviderInstance->getStatus();
-                        foreach ($statusObj as $sKey => $sObj) {
-                            $reportsInfo[$group][$sKey] = array(
-                                'value' => $sObj->getValue(),
-                                'severity' => $sObj->getSeverity(),
-                            );
+                    try {
+                        $statusProviderInstance = Tx_T3monitor_Service_Compatibility::makeInstance($statusProvider);
+                        if (is_a($statusProviderInstance, \TYPO3\CMS\Reports\StatusProviderInterface::class)) {
+                            $statusObj = $statusProviderInstance->getStatus();
+                            foreach ($statusObj as $sKey => $sObj) {
+                                /** @var \TYPO3\CMS\Reports\Status $sObj */
+                                $reportsInfo[$group][$sKey] = array(
+                                    'value' => $sObj->getValue(),
+                                    'severity' => $sObj->getSeverity(),
+                                );
+                            }
                         }
+                    } catch (Exception $e) {
+                        $reportsInfo['exceptions'][$e->getCode()] = array(
+                            'value' => $e->getMessage(),
+                            'severity' => 2,
+                        );
+                        unset($e);
                     }
                 }
             }
