@@ -132,7 +132,7 @@ class Tx_T3monitor_Service_Dispatcher
         if (!defined('PATH_typo3') && !Tx_T3monitor_Service_Compatibility::isTypo3VersionGte10()) {
             define('PATH_typo3', PATH_site . TYPO3_mainDir);
         }
-        if (!is_object($GLOBALS['LANG'])) {
+        if (!isset($GLOBALS['LANG']) || !is_object($GLOBALS['LANG'])) {
             $comp->initLang();
         }
     }
