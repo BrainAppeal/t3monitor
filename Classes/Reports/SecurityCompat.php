@@ -49,13 +49,16 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
             $reportsInfo = array();
         }
         //If reports from parent class are empty, create reports manually
-        if (empty($reportsInfo['typo3'])) {
+        if (empty($reportsInfo['_install'])) {
             $reportsInfo['_install'] = $this->getInstallReports();
-            $reportsInfo['typo3'] = array(
-                'Typo3Version' => array(
-                    'value' => Tx_T3monitor_Service_Compatibility::getTypo3Version(),
-                    'severity' => -2,
-                ),
+        }
+        if (empty($reportsInfo['typo3'])) {
+            $reportsInfo['typo3'] = array();
+        }
+        if (empty($reportsInfo['typo3']['Typo3Version'])) {
+            $reportsInfo['typo3']['Typo3Version'] = array(
+                'value' => Tx_T3monitor_Service_Compatibility::getTypo3Version(),
+                'severity' => -2,
             );
         }
         if (empty($reportsInfo['system'])) {

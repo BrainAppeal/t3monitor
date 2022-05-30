@@ -62,6 +62,12 @@ class Tx_T3monitor_Reports_Security extends Tx_T3monitor_Reports_Abstract
     protected function addAdditonalReports(&$reportsInfo)
     {
         $reportsInfo['typo3']['StartPage'] = $this->getStartPageIdReport();
+        if (empty($reportsInfo['typo3']['Typo3Version'])) {
+            $reportsInfo['typo3']['Typo3Version'] = array(
+                'value' => Tx_T3monitor_Service_Compatibility::getTypo3Version(),
+                'severity' => -2,
+            );
+        }
     }
     /**
      * Find id of start page (real id, no shortcuts)
