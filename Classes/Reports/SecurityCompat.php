@@ -61,14 +61,23 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
                 'severity' => -2,
             );
         }
+        $additionalSystemReports = $this->getSystemReports();
         if (empty($reportsInfo['system'])) {
-            $reportsInfo['system'] = $this->getSystemReports();
+            $reportsInfo['system'] = $additionalSystemReports;
+        } else {
+            $reportsInfo['system'] = array_merge($reportsInfo['system'], $additionalSystemReports);
         }
+        $additionalSecurityReports = $this->getSecurityReports();
         if (empty($reportsInfo['security'])) {
-            $reportsInfo['security'] = $this->getSecurityReports();
+            $reportsInfo['security'] = $additionalSecurityReports;
+        } else {
+            $reportsInfo['security'] = array_merge($reportsInfo['security'], $additionalSecurityReports);
         }
+        $additionalConfigurationReports = $this->getConfigurationReports();
         if (empty($reportsInfo['configuration'])) {
-            $reportsInfo['configuration'] = $this->getConfigurationReports();
+            $reportsInfo['configuration'] = $additionalConfigurationReports;
+        } else {
+            $reportsInfo['configuration'] = array_merge($reportsInfo['configuration'], $additionalConfigurationReports);
         }
         //Extend typo3 system reports with additional reports
         $this->addAdditonalReports($reportsInfo);
