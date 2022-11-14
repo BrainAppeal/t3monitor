@@ -35,11 +35,92 @@
 class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
 {
     /**
-     * Returns informations about the database tables
+     * Returns information about the database tables
      *
      * @param Tx_T3monitor_Reports_Reports $reportHandler
      */
     public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
+    {
+        $this->addSysLogReports($reportHandler);
+        $this->addLogFileReports($reportHandler);
+    }
+
+    /**
+     * Returns logging information from the log files
+     *
+     * @param Tx_T3monitor_Reports_Reports $reportHandler
+     */
+    private function addLogFileReports(Tx_T3monitor_Reports_Reports $reportHandler)
+    {
+        if (class_exists(\TYPO3\CMS\Core\Log\LogManager::class)
+            && class_exists(\TYPO3\CMS\Core\Error\ErrorHandler::class)
+            && class_exists(\TYPO3\CMS\Core\Log\Writer\FileWriter::class)) {
+            $logManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class);
+            $errorLogger = $logManager->getLogger(\TYPO3\CMS\Core\Error\ErrorHandler::class);
+            $writers = $errorLogger->getWriters();
+            $cWriter = $writers['critical'][0] ?? null;
+            $info = [];
+            if ($cWriter instanceof \TYPO3\CMS\Core\Log\Writer\FileWriter) {
+                $logFile = $cWriter->getLogFile();
+                $lines = $this->readLastLinesFromFile($logFile, 50);
+                $info['log'] = $lines;
+            }
+            $varDirSizes = $this->getGroupedDirectorySize(\TYPO3\CMS\Core\Core\Environment::getVarPath());
+            $info['dir_sizes'] = $varDirSizes;
+            $reportHandler->add('var', $info);
+        }
+    }
+
+    /**
+     * Returns the directory sizes grouped by
+     * @param string $basePath
+     * @return array
+     */
+    function getGroupedDirectorySize(string $basePath): array
+    {
+        $bytesTotal = [];
+        $path = realpath($basePath);
+        if(!empty($path) && file_exists($path)){
+            foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS)) as $object){
+                /** @var \SplFileInfo $object */
+                $paths = explode(DIRECTORY_SEPARATOR, trim(str_replace($basePath, '', $object->getPath()), DIRECTORY_SEPARATOR));
+                $bytesTotal[$paths[0]] += $object->getSize();
+
+            }
+        }
+        return $bytesTotal;
+    }
+
+    /**
+     * Reads the last X lines of the log file
+     * 
+     * @param string $absFilePath
+     * @param int $lineCount
+     * @return string[]|null
+     */
+    private function readLastLinesFromFile(string $absFilePath, int $lineCount): ?array
+    {
+        try {
+            $file = new SplFileObject($absFilePath, 'r');
+            $file->seek(PHP_INT_MAX);
+            $lastLine = $file->key();
+            $lineOffset = max(0, $lastLine - $lineCount);
+            $lines = new LimitIterator($file, $lineOffset, $lastLine); //n being non-zero positive integer
+            return array_filter(iterator_to_array($lines));
+        } catch (\Exception $e) {
+            \TYPO3\CMS\Core\Utility\DebugUtility::debug($e);
+            return [
+                $e->getMessage() . ' ['.$e->getFile() . '::' . $e->getLine().']'
+            ];
+        }
+    }
+
+    /**
+     * Returns logging information from the sys_log table
+     *
+     * @param Tx_T3monitor_Reports_Reports $reportHandler
+     */
+    private function addSysLogReports(Tx_T3monitor_Reports_Reports $reportHandler): void
     {
         $info = array();
         $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
