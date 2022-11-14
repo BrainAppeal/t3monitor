@@ -44,23 +44,35 @@ class Tx_T3monitor_Reports_Applications extends Tx_T3monitor_Reports_Abstract
     {
         $info = array();
         $cmsPublicPath = Tx_T3monitor_Service_Compatibility::getPublicPath();
-        $checkDirs = array(
-            $cmsPublicPath . 'piwik',
-            dirname($cmsPublicPath) . '/piwik',
+        $checkApps = array(
+            'piwik' => [
+                'check_files' => [
+                    $cmsPublicPath . 'piwik/core/Version.php',
+                    dirname($cmsPublicPath) . '/piwik/core/Version.php',
+                ],
+                'pattern' => '/const VERSION\s*=\s*\'([^\']+)\';/',
+            ],
+            'matomo' => [
+                'check_files' => [
+                    $cmsPublicPath . 'matomo/core/Version.php',
+                    dirname($cmsPublicPath) . '/matomo/core/Version.php',
+                ],
+                'pattern' => '/const VERSION\s*=\s*\'([^\']+)\';/',
+            ],
         );
-        foreach ($checkDirs as $dir) {
-            $vFile = $dir . '/core/Version.php';
-            if (file_exists($vFile)) {
-                require_once $vFile;
-                $className = 'Piwik_Version';
-                if (!class_exists($className))  {
-                    $className = '\\Piwik\\Version';
-                }
-                if (class_exists($className)) {
-                    $info['PiwikVersion'] = array(
-                        'value' => $className::VERSION,
-                        'severity' => -2,
-                    );
+        foreach ($checkApps as $app => $appConfig) {
+            $checkFiles = $appConfig['check_files'];
+            foreach ($checkFiles as $vFile) {
+                if (file_exists($vFile) && is_readable($vFile)) {
+                    $fileContent = file_get_contents($vFile);
+                    preg_match($appConfig['pattern'], $fileContent, $versionMatches);
+                    if (!empty($versionMatches[1])) {
+                        $info[ucfirst($app) . 'Version'] = array(
+                            'value' => $versionMatches[1],
+                            'severity' => -2,
+                        );
+                        break;
+                    }
                 }
             }
         }
