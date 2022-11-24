@@ -101,14 +101,18 @@ class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
     private function readLastLinesFromFile(string $absFilePath, int $lineCount): ?array
     {
         try {
-            $file = new SplFileObject($absFilePath, 'r');
-            $file->seek(PHP_INT_MAX);
-            $lastLine = $file->key();
-            $lineOffset = max(0, $lastLine - $lineCount);
-            $lines = new LimitIterator($file, $lineOffset, $lastLine); //n being non-zero positive integer
-            return array_filter(iterator_to_array($lines));
+            if (file_exists($absFilePath) && filesize($absFilePath) > 0) {
+                $file = new SplFileObject($absFilePath, 'r');
+                $file->seek(PHP_INT_MAX);
+                $lastLine = $file->key();
+                $lineOffset = max(0, $lastLine - $lineCount);
+                if ($lineOffset > 0) {
+                    $lines = new LimitIterator($file, $lineOffset, $lastLine); //n being non-zero positive integer
+                    return array_filter(iterator_to_array($lines));
+                }
+            }
+            return [];
         } catch (\Exception $e) {
-            \TYPO3\CMS\Core\Utility\DebugUtility::debug($e);
             return [
                 $e->getMessage() . ' ['.$e->getFile() . '::' . $e->getLine().']'
             ];
