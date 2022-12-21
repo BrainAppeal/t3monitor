@@ -65,7 +65,12 @@ class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
                 $lines = $this->readLastLinesFromFile($logFile, 50);
                 $info['log'] = $lines;
             }
-            $varDirSizes = $this->getGroupedDirectorySize(\TYPO3\CMS\Core\Core\Environment::getVarPath());
+            if (class_exists(\TYPO3\CMS\Core\Core\Environment::class)) {
+                $varPath = \TYPO3\CMS\Core\Core\Environment::getVarPath();
+            } else {
+                $varPath = \Tx_T3monitor_Service_Compatibility::getPublicPath() . 'typo3temp/var';
+            }
+            $varDirSizes = $this->getGroupedDirectorySize($varPath);
             $info['dir_sizes'] = $varDirSizes;
             $reportHandler->add('var', $info);
         }
@@ -102,13 +107,10 @@ class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
     {
         try {
             if (file_exists($absFilePath) && filesize($absFilePath) > 0) {
-                $file = new SplFileObject($absFilePath, 'r');
-                $file->seek(PHP_INT_MAX);
-                $lastLine = $file->key();
-                $lineOffset = max(0, $lastLine - $lineCount);
-                if ($lineOffset > 0) {
-                    $lines = new LimitIterator($file, $lineOffset, $lastLine); //n being non-zero positive integer
-                    return array_filter(iterator_to_array($lines));
+                $commandOutput = $this->tailCustom($absFilePath, $lineCount);
+                if (!empty($commandOutput)) {
+                    $lines = explode("\n", $commandOutput);
+                    return array_filter($lines);
                 }
             }
             return [];
@@ -117,6 +119,70 @@ class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
                 $e->getMessage() . ' ['.$e->getFile() . '::' . $e->getLine().']'
             ];
         }
+    }
+
+    /**
+    * Slightly modified version of http://www.geekality.net/2011/05/28/php-tail-tackling-large-files/
+    * @author Torleif Berger, Lorenzo Stanco
+    * @link http://stackoverflow.com/a/15025877/995958
+    * @license http://creativecommons.org/licenses/by/3.0/
+    * @see https://gist.github.com/lorenzos/1711e81a9162320fde20
+    */
+    private function tailCustom($filepath, $lines = 1, $adaptive = true) {
+
+        // Open file
+        $f = @fopen($filepath, "rb");
+        if ($f === false) return false;
+
+        // Sets buffer size, according to the number of lines to retrieve.
+        // This gives a performance boost when reading a few lines from the file.
+        if (!$adaptive) $buffer = 4096;
+        else $buffer = ($lines < 2 ? 64 : ($lines < 10 ? 512 : 4096));
+
+        // Jump to last character
+        fseek($f, -1, SEEK_END);
+
+        // Read it and adjust line number if necessary
+        // (Otherwise the result would be wrong if file doesn't end with a blank line)
+        if (fread($f, 1) != "\n") $lines -= 1;
+
+        // Start reading
+        $output = '';
+        $chunk = '';
+
+        // While we would like more
+        while (ftell($f) > 0 && $lines >= 0) {
+
+            // Figure out how far back we should jump
+            $seek = min(ftell($f), $buffer);
+
+            // Do the jump (backwards, relative to where we are)
+            fseek($f, -$seek, SEEK_CUR);
+
+            // Read a chunk and prepend it to our output
+            $output = ($chunk = fread($f, $seek)) . $output;
+
+            // Jump back to where we started reading
+            fseek($f, -mb_strlen($chunk, '8bit'), SEEK_CUR);
+
+            // Decrease our line counter
+            $lines -= substr_count($chunk, "\n");
+
+        }
+
+        // While we have too many lines
+        // (Because of buffer size we might have read too many)
+        while ($lines++ < 0) {
+
+            // Find first newline and remove all text before that
+            $output = substr($output, strpos($output, "\n") + 1);
+
+        }
+
+        // Close file and return
+        fclose($f);
+        return trim($output);
+
     }
 
     /**

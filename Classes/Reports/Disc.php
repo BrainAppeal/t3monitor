@@ -104,11 +104,7 @@ class Tx_T3monitor_Reports_Disc extends Tx_T3monitor_Reports_Abstract
     private function dirSize($directory)
     {
         $size = 0;
-        if (class_exists('\\TYPO3\\CMS\\Core\\Core\\Environment')) {
-            $osIsWindows = \TYPO3\CMS\Core\Core\Environment::isWindows();
-        } else {
-            $osIsWindows = TYPO3_OS != 'WIN';
-        }
+        $osIsWindows = \Tx_T3monitor_Service_Compatibility::isWindows();
         if(!$osIsWindows){
             //Returns size in Kilobytes
             $result = explode("\t", exec("du --summarize ".$directory) , 2);

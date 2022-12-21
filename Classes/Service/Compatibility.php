@@ -352,5 +352,18 @@ class Tx_T3monitor_Service_Compatibility {
     {
         return self::getTypo3Version(true) >= 10000000;
     }
+
+    /**
+     * @return bool
+     */
+    public static function isWindows(): bool
+    {
+        if (class_exists(\TYPO3\CMS\Core\Core\Environment::class)) {
+            $osIsWindows = \TYPO3\CMS\Core\Core\Environment::isWindows();
+        } else {
+            /** @noinspection PhpUndefinedConstantInspection */
+            $osIsWindows = TYPO3_OS != 'WIN';
+        }
+        return $osIsWindows;
+    }
 }
-?>

@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 1.2.14 (2022-12-21)
+
+- [BUGFIX] fix var path retrieval for TYPO3 < 9
+
 ## 1.2.13 (2022-11-24)
 
 - [BUGFIX] fix reading last log lines for empty log file
