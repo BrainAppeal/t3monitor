@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 1.2.14 (2023-01-09)
+
+- [BUGFIX] fix undefined array key in directory size calculation
+
 ## 1.2.14 (2022-12-21)
 
 - [BUGFIX] fix var path retrieval for TYPO3 < 9

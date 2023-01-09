@@ -89,7 +89,11 @@ class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
             foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS)) as $object){
                 /** @var \SplFileInfo $object */
                 $paths = explode(DIRECTORY_SEPARATOR, trim(str_replace($basePath, '', $object->getPath()), DIRECTORY_SEPARATOR));
-                $bytesTotal[$paths[0]] += $object->getSize();
+                $pathKey = $paths[0];
+                if (!isset($bytesTotal[$pathKey])) {
+                    $bytesTotal[$pathKey] = 0;
+                }
+                $bytesTotal[$pathKey] += $object->getSize();
 
             }
         }
@@ -103,7 +107,7 @@ class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
      * @param int $lineCount
      * @return string[]|null
      */
-    private function readLastLinesFromFile(string $absFilePath, int $lineCount): ?array
+    private function readLastLinesFromFile(string $absFilePath, int $lineCount)
     {
         try {
             if (file_exists($absFilePath) && filesize($absFilePath) > 0) {
@@ -190,7 +194,7 @@ class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
      *
      * @param Tx_T3monitor_Reports_Reports $reportHandler
      */
-    private function addSysLogReports(Tx_T3monitor_Reports_Reports $reportHandler): void
+    private function addSysLogReports(Tx_T3monitor_Reports_Reports $reportHandler)
     {
         $info = array();
         $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
