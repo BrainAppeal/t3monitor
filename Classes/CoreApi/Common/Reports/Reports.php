@@ -25,6 +25,7 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
+namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
 /**
  * Timer for duration of function calls
  *
@@ -32,7 +33,7 @@
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_T3monitor_Reports_Reports
+class Reports
 {
     /**
      * Contains timer infos for different keys
@@ -45,42 +46,43 @@ class Tx_T3monitor_Reports_Reports
      */
     public function __construct()
     {
-        $this->data = array();
+        $this->data = [];
     }
     /**
      * Adds the given report data to the data
      *
-     * @return string $key A unique identifier
-     * @return array $value The report data
+     * @param string $key A unique identifier
+     * @param array|mixed $value The report data
      */
-    public function add($key, $value)
+    public function add(string $key, $value): void
     {
-        $this->_add($key, $value, $this->data);
+        $this->addRecursive($key, $value, $this->data);
     }
+
     /**
      * Recursive function to add key value pairs with multidimensional array
      *
-     * @param string $key A unique identifier
+     * @param string|int $key A unique identifier
      * @param array|string $value The report data
-     * @param array $data Data array
+     * @param array|mixed $data Data array
      */
-    private function _add($key, $value, &$data)
+    private function addRecursive($key, $value, &$data): void
     {
         if(!isset($data[$key]) || !is_array($value)){
             $data[$key] = $value;
         } else {
             $sData =& $data[$key];
             foreach($value as $sKey => $sVal){
-                $this->_add($sKey, $sVal, $sData);
+                $this->addRecursive($sKey, $sVal, $sData);
             }
         }
     }
     /**
-     * Returns all report informations as an array
+     * Returns all report information as an array
      *
      * @return array Reports data
      */
-    public function toArray()
+    public function toArray(): array
     {
         return $this->data;
     }

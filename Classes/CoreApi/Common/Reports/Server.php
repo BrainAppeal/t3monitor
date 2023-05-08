@@ -25,6 +25,8 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
+namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+
 /**
  * Report class for server.
  *
@@ -32,86 +34,85 @@
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_T3monitor_Reports_Server extends Tx_T3monitor_Reports_Abstract
+class Server extends AbstractReport
 {
     /**
      * Create reports
      *
-     * @param Tx_T3monitor_Reports_Reports $reportHandler
+     * @param Reports $reportHandler
      */
-    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
+    public function addReports(Reports $reportHandler)
     {
-        $info = array();
+        $info = [];
         //System reports
-        $system = array(
-            'OperatingSystem' => array(
+        $system = [
+            'OperatingSystem' => [
                 'value' => php_uname(),
                 'severity' => -2,
-            ),
-        );
+            ],
+        ];
 
         $config = $this->getConfig();
         $isExtended = $config->getShowExtendedReports();
         if ($isExtended) {
-            $system['ServerName'] = array(
+            $system['ServerName'] = [
                 'value' => $_SERVER['SERVER_NAME'],
                 'severity' => -2,
-            );
-            $system['ServerAddr'] = array(
+            ];
+            $system['ServerAddr'] = [
                 'value' => $_SERVER['SERVER_ADDR'],
                 'severity' => -2,
-            );
-            $system['ServerApi'] = array(
+            ];
+            $system['ServerApi'] = [
                 'value' => php_sapi_name(),
                 'severity' => -2,
-            );
+            ];
         }
 
-        $currentMysqlVersion = null;
-        $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
+        $db = $this->coreApi->getDatabase();
         $currentMysqlVersion = $db->getDatabaseVariable('version');
         if (empty($currentMysqlVersion) && function_exists('mysql_get_client_info')){
             $currentMysqlVersion = mysql_get_client_info();
         }
         if (!empty($currentMysqlVersion)) {
 
-            $system['MysqlVersion'] = array(
+            $system['MysqlVersion'] = [
                 'value' => $currentMysqlVersion,
                 'severity' => -2,
-            );
+            ];
         }
         $info['system'] = $system;
-        $configuration = array();
-        $configuration['maxExecutionTime'] = array(
+        $configuration = [];
+        $configuration['maxExecutionTime'] = [
             'value' => ini_get('max_execution_time'),
             'severity' => -2,
-        );
-        $configuration['postMaxSize'] = array(
+        ];
+        $configuration['postMaxSize'] = [
             'value' => ini_get('post_max_size'),
             'severity' => -2,
-        );
-        $configuration['maxInputVars'] = array(
+        ];
+        $configuration['maxInputVars'] = [
             'value' => ini_get('max_input_vars'),
             'severity' => -2,
-        );
+        ];
 
         if ($isExtended) {
-            $configuration['allowUrlFopen'] = array(
+            $configuration['allowUrlFopen'] = [
                 'value' => ini_get('allow_url_fopen'),
                 'severity' => -2,
-            );
-            $configuration['maxInputTime'] = array(
+            ];
+            $configuration['maxInputTime'] = [
                 'value' => ini_get('max_input_time'),
                 'severity' => -2,
-            );
-            $configuration['displayErrors'] = array(
+            ];
+            $configuration['displayErrors'] = [
                 'value' => ini_get('display_errors'),
                 'severity' => -2,
-            );
-            $configuration['fileUploads'] = array(
+            ];
+            $configuration['fileUploads'] = [
                 'value' => ini_get('file_uploads'),
                 'severity' => -2,
-            );
+            ];
         }
         $info['configuration'] = $configuration;
         $reportHandler->add('reports', $info);

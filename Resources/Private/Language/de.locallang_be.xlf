@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="messages" date="2023-04-28T08:00:00Z" product-name="t3monitor">
+		<header/>
+		<body>
+			<trans-unit id="encryption_key" xml:space="preserve">
+				<source>Encryption Key: Für die Verschlüsselung der übertragenen Daten. Den Key für diese Webseite erhalten Sie in Ihrem T3Monitor-Account (www.t3monitor.de).</source>
+			</trans-unit>
+			<trans-unit id="exclude_local" xml:space="preserve">
+				<source>Extensions ausschließen: Diese lokale Extensions sollen vom T3Monitor ignoriert werden. Alle System-Extensions werden automatisch ignoriert.</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

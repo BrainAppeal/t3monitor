@@ -24,25 +24,28 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
-require_once 'Security.php';
+
+namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+
+use TYPO3\CMS\Core\Core\Environment;
+
 /**
- * Report class for security. Creates status reports similar to
- * "reports" system extension
- * Also works for TYPO3 4.2
+ * Report class for security. Creates status reports similar to "reports" system extension
  *
  * @category TYPO3
  * @package T3Monitor
  * @subpackage Reports
+ *
+ * @see tx_reports_reports_Status
  */
-class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
+class Security extends AbstractReport
 {
-
     /**
      * Returns the system status reports
      *
-     * @param Tx_T3monitor_Reports_Reports $reportHandler
+     * @param \BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler
      */
-    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
+    public function addReports(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler)
     {
         $reportsInfo = $this->getReportsFromExt();
         if (empty($reportsInfo)) {
@@ -53,13 +56,13 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
             $reportsInfo['_install'] = $this->getInstallReports();
         }
         if (empty($reportsInfo['typo3'])) {
-            $reportsInfo['typo3'] = array();
+            $reportsInfo['typo3'] = [];
         }
         if (empty($reportsInfo['typo3']['Typo3Version'])) {
-            $reportsInfo['typo3']['Typo3Version'] = array(
-                'value' => Tx_T3monitor_Service_Compatibility::getTypo3Version(),
+            $reportsInfo['typo3']['Typo3Version'] = [
+                'value' => $this->coreApi->getTypo3Version(),
                 'severity' => -2,
-            );
+            ];
         }
         $additionalSystemReports = $this->getSystemReports();
         if (empty($reportsInfo['system'])) {
@@ -73,15 +76,41 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
         } else {
             $reportsInfo['security'] = array_merge($reportsInfo['security'], $additionalSecurityReports);
         }
-        $additionalConfigurationReports = $this->getConfigurationReports();
-        if (empty($reportsInfo['configuration'])) {
-            $reportsInfo['configuration'] = $additionalConfigurationReports;
-        } else {
-            $reportsInfo['configuration'] = array_merge($reportsInfo['configuration'], $additionalConfigurationReports);
-        }
         //Extend typo3 system reports with additional reports
         $this->addAdditonalReports($reportsInfo);
         $reportHandler->add('reports', $reportsInfo);
+    }
+    protected function addAdditonalReports(&$reportsInfo): void
+    {
+        $reportsInfo['typo3']['StartPage'] = $this->getStartPageIdReport();
+        if (empty($reportsInfo['typo3']['Typo3Version'])) {
+            $reportsInfo['typo3']['Typo3Version'] = array(
+                'value' => $this->coreApi->getTypo3Version(),
+                'severity' => -2,
+            );
+        }
+    }
+    /**
+     * Find id of start page (real id, no shortcuts)
+     *
+     * @return array Report data
+     */
+    private function getStartPageIdReport(): array
+    {
+        //id of start page; if null, rootline is not configured correctly
+        $db = $this->coreApi->getDatabase();
+        $startRow = $db->getStartPage();
+        $pageId = 0;
+        $severity = self::ERROR;
+        if (!empty($startRow)) {
+            $pageId = $startRow['uid'];
+            $severity = self::OK;
+        }
+        $report = [
+            'value' => $pageId,
+            'severity' => $severity,
+        ];
+        return $report;
     }
 
     /**
@@ -112,12 +141,12 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
         );
         $value = 'Writable';
         $severity = self::OK;
-        $basePath = Tx_T3monitor_Service_Compatibility::getPublicPath();
+        $basePath = Environment::getPublicPath() . '/';
         foreach ($checkWritable as $relPath => $requirementLevel) {
             $absPath = $basePath . $relPath;
             if (!@is_dir($absPath) || !is_writable($absPath)) {
                 $severity = $requirementLevel;
-                if ($severity == self::ERROR) {
+                if ($severity === self::ERROR) {
                     $value = 'Directory not writable';
                     break;
                 }
@@ -129,10 +158,6 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
         );
         $value = 'Update Complete';
         $severity = self::OK;
-//        if (!Tx_T3monitor_Service_Compatibility::getInstance()->compat_version(TYPO3_branch)) {
-//            $value = 'Update Incomplete';
-//            $severity = self::WARNING;
-//        }
         $info['RemainingUpdates'] = array(
             'value' => $value,
             'severity' => $severity,
@@ -149,7 +174,7 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
     {
         $info = array();
         $severity = self::OK;
-        $value = phpversion();
+        $value = PHP_VERSION;
         if (version_compare($value, TYPO3_REQUIREMENTS_MINIMUM_PHP) < 0) {
             $severity = self::ERROR;
         }
@@ -172,18 +197,6 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
             'severity' => $severity,
         );
         $severity = self::OK;
-        $value = 'Disabled';
-        $registerGlobals = trim(ini_get('register_globals'));
-        // can't reliably check for 'on', therefore checking for the oposite 'off', '', or 0
-        if (!empty($registerGlobals) && strtolower($registerGlobals) !== 'off') {
-            $value = 'Enabled';
-            $severity = self::ERROR;
-        }
-        $info['PhpRegisterGlobals'] = array(
-            'value' => $value,
-            'severity' => $severity,
-        );
-        $severity = self::OK;
         $info['Webserver'] = array(
             'value' => $_SERVER['SERVER_SOFTWARE'],
             'severity' => $severity,
@@ -194,14 +207,14 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
     /**
      * Gets the bytes value from a measurement string like "100k".
      *
-     * @see \TYPO3\CMS\Core\Utility\GeneralUtility::getBytesFromSizeMeasurement (not available in TYPO3 <= 4.2)
-     *
      * @param	string		$measurement: The measurement (e.g. "100k")
      * @return	integer		The bytes value (e.g. 102400)
+     *@see \TYPO3\CMS\Core\Utility\GeneralUtility::getBytesFromSizeMeasurement (not available in TYPO3 <= 4.2)
+     *
      */
-    private static function getBytesFromSizeMeasurement($measurement)
+    private static function getBytesFromSizeMeasurement(string $measurement)
     {
-        $bytes = doubleval($measurement);
+        $bytes = (float)$measurement;
         if (stripos($measurement, 'G')) {
             $bytes *= 1024 * 1024 * 1024;
         } elseif (stripos($measurement, 'M')) {
@@ -217,9 +230,9 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
      *
      * @return array
      */
-    private function getSecurityReports()
+    private function getSecurityReports(): array
     {
-        $info = array();
+        $info = [];
         $info['adminUserAccount'] = $this->securityAdminAccount();
 
         $value = 'OK';
@@ -241,11 +254,10 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
         } else {
             $defaultFileDenyPattern = constant('FILE_DENY_PATTERN_DEFAULT');
         }
-        $compatibilityObject = Tx_T3monitor_Service_Compatibility::getInstance();
         if (isset($GLOBALS['TYPO3_CONF_VARS']['BE']['fileDenyPattern'])) {
             $fileDenyPattern = $GLOBALS['TYPO3_CONF_VARS']['BE']['fileDenyPattern'];
-            $defaultParts = $compatibilityObject->trimExplode('|', $defaultFileDenyPattern, TRUE);
-            $givenParts = $compatibilityObject->trimExplode('|', $fileDenyPattern, TRUE);
+            $defaultParts = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('|', $defaultFileDenyPattern, TRUE);
+            $givenParts = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('|', $fileDenyPattern, TRUE);
             $missingParts = array_diff($defaultParts, $givenParts);
             if (!empty($missingParts)) {
                 $value = 'Insecure';
@@ -261,7 +273,7 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
         $value = 'OK';
         $severity = self::OK;
         if ($fileDenyPattern !== $defaultFileDenyPattern
-            && $compatibilityObject->verifyFilenameAgainstDenyPattern('.htaccess')) {
+            && $this->coreApi->verifyFilenameAgainstDenyPattern('.htaccess')) {
             $value = 'Insecure';
             $severity = self::ERROR;
         }
@@ -272,7 +284,7 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
         $info['installToolEnabled'] = $this->securityInstallTool();
         $value = 'OK';
         $severity = self::OK;
-        if ($GLOBALS['TYPO3_CONF_VARS']['BE']['installToolPassword'] == md5('joh316')) {
+        if ($GLOBALS['TYPO3_CONF_VARS']['BE']['installToolPassword'] === md5('joh316')) {
             $value = 'Insecure';
             $severity = self::ERROR;
         }
@@ -287,11 +299,11 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
      *
      * @return array Check result
      */
-    private function securityAdminAccount()
+    private function securityAdminAccount(): array
     {
         $severity = self::OK;
         $value = 'OK';
-        $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
+        $db = $this->coreApi->getDatabase();
         $where = 'username = ' . $db->fullQuoteStr('admin', 'be_users')
             . ' AND password = ' . $db->fullQuoteStr(md5('password'), 'be_users')
             . ' AND deleted = 0';
@@ -300,22 +312,22 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
             $value = 'Insecure';
             $severity = self::ERROR;
         }
-        $checkResult = array(
+        $checkResult = [
             'value' => $value,
             'severity' => $severity,
-        );
+        ];
         return $checkResult;
     }
     /**
-     * Checks if a the install tool is enabled
+     * Checks if the install tool is enabled
      *
      * @return array Check result
      */
-    private function securityInstallTool()
+    private function securityInstallTool(): array
     {
         $value = 'Disabled';
         $severity = self::OK;
-        $basePath = Tx_T3monitor_Service_Compatibility::getPublicPath();
+        $basePath = Environment::getPublicPath() . '/';
         $enableInstallToolFile = $basePath . 'typo3conf/ENABLE_INSTALL_TOOL';
         $enableInstallToolFileExists = is_file($enableInstallToolFile);
         if ($enableInstallToolFileExists) {
@@ -332,44 +344,52 @@ class Tx_T3monitor_Reports_SecurityCompat extends Tx_T3monitor_Reports_Security
                 }
             }
         }
-        $checkResult = array(
+        $checkResult = [
             'value' => $value,
             'severity' => $severity,
-        );
+        ];
         return $checkResult;
     }
-
     /**
-     * @see tx_reports_reports_status_ConfigurationStatus
+     * Get status reports from system extension "reports" (Does not have to be installed)
      *
-     * @return array
+     * @return array|bool Array with report infos; returns false if reports Extension was not found
      */
-    private function getConfigurationReports()
+    protected function getReportsFromExt()
     {
-        $info = array();
-        $value = 'OK';
-        $severity = self::OK;
-        /* $info['emptyReferenceIndex'] = array(
-          'value' => $value,
-          'severity' => $severity,
-          );
-          $value = 'OK';
-          $severity = self::OK;
-          $info['deprecationLog'] = array(
-          'value' => $value,
-          'severity' => $severity,
-          ); */
-        $value = 'Disabled';
-        $severity = self::OK;
-        $safeMode = strtolower(ini_get('safe_mode'));
-        if ($safeMode === 'on' || $safeMode === 1) {
-            $value = 'Enabled';
-            $severity = self::WARNING;
+        $reportsInfo = array();
+        // TYPO3 >= 10.4
+        if (!empty($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['reports']['tx_reports']['status']['providers'])
+            && interface_exists(\TYPO3\CMS\Reports\StatusProviderInterface::class)) {
+            foreach ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['reports']['tx_reports']['status']['providers'] as $group => $statusProvidersList) {
+                foreach ($statusProvidersList as $statusProvider) {
+                    try {
+                        $statusProviderInstance = $this->coreApi->makeInstance($statusProvider);
+                        if (is_a($statusProviderInstance, \TYPO3\CMS\Reports\StatusProviderInterface::class)) {
+                            if (is_a($statusProviderInstance, \TYPO3\CMS\Reports\RequestAwareStatusProviderInterface::class)
+                                && isset($GLOBALS['TYPO3_REQUEST'])) {
+                                $statusObj = $statusProviderInstance->getStatus($GLOBALS['TYPO3_REQUEST']);
+                            } else {
+                                $statusObj = $statusProviderInstance->getStatus();
+                            }
+                            foreach ($statusObj as $sKey => $sObj) {
+                                /** @var \TYPO3\CMS\Reports\Status $sObj */
+                                $reportsInfo[$group][$sKey] = array(
+                                    'value' => $sObj->getValue(),
+                                    'severity' => (int) $sObj->getSeverity(),
+                                );
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        $reportsInfo['exceptions'][$e->getCode()] = array(
+                            'value' => $e->getMessage(),
+                            'severity' => 2,
+                        );
+                        unset($e);
+                    }
+                }
+            }
         }
-        $info['safeModeEnabled'] = array(
-            'value' => $value,
-            'severity' => $severity,
-        );
-        return $info;
+        return $reportsInfo;
     }
 }

@@ -25,6 +25,7 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
+namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
 use TYPO3\CMS\Core\Localization\LanguageService;
 
 /**
@@ -34,17 +35,16 @@ use TYPO3\CMS\Core\Localization\LanguageService;
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_T3monitor_Reports_Internal extends Tx_T3monitor_Reports_Abstract
+class Internal extends AbstractReport
 {
     /**
      * Create reports
      *
-     * @param Tx_T3monitor_Reports_Reports $reportHandler
+     * @param Reports $reportHandler
      */
-    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
+    public function addReports(Reports $reportHandler)
     {
-        $t3ver = Tx_T3monitor_Service_Compatibility::getTypo3Version(true);
-        if ($t3ver >= 6000000 && \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('reports')) {
+        if (\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('reports')) {
             $internalReports = array();
             $status = array();
             $reportClasses = array();
@@ -60,19 +60,19 @@ class Tx_T3monitor_Reports_Internal extends Tx_T3monitor_Reports_Abstract
                 }
             }
             $checkInstallPath = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('install') . 'Classes/Report/';
-            $intallFiles = scandir($checkInstallPath);
+            $installFiles = scandir($checkInstallPath);
             $mapKeys = array(
                 'InstallStatusReport' => 'typo3',
                 'SecurityStatusReport' => 'security',
                 'EnvironmentStatusReport' => 'system',
             );
-            foreach ($intallFiles as $file) {
+            foreach ($installFiles as $file) {
                 if (strpos($file, '.') !== 0 && strpos($file, '.php') !== false) {
                     $fileName = str_replace( '.php', '', $file);
                     if (isset($mapKeys[$fileName])) {
                         $key = $mapKeys[$fileName];
                     } else {
-                        $key = trim(strtolower(str_replace(array('Status', 'Report'), '', $fileName)));
+                        $key = strtolower(trim(str_replace(array('Status', 'Report'), '', $fileName)));
                     }
                     $reportClasses[$key][] = 'TYPO3\\CMS\\Install\\Report\\' . $fileName;
                 }
@@ -85,7 +85,7 @@ class Tx_T3monitor_Reports_Internal extends Tx_T3monitor_Reports_Abstract
             foreach ($reportClasses as $statusProviderId => $reportClassNames) {
                 foreach ($reportClassNames as $reportClass) {
                     try {
-                        $statusProviderInstance = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance($reportClass);
+                        $statusProviderInstance = $this->coreApi->makeInstance($reportClass);
                         if (method_exists($statusProviderInstance, 'getStatus')) {
                             $statuses = $statusProviderInstance->getStatus();
                             if (empty($status[$statusProviderId])) {
@@ -94,7 +94,7 @@ class Tx_T3monitor_Reports_Internal extends Tx_T3monitor_Reports_Abstract
                                 $status[$statusProviderId] = array_merge($status[$statusProviderId], $statuses);
                             }
                         }
-                    } catch (Exception $e) {
+                    } catch (\Exception $e) {
                         unset($e);
                     }
                 }
@@ -104,7 +104,7 @@ class Tx_T3monitor_Reports_Internal extends Tx_T3monitor_Reports_Abstract
                 foreach ($groupStatusList as $statusName => $statusInstance) {
                     $internalReports[$group][$statusName] = array(
                         'value' => $statusInstance->getValue(),
-                        'severity' => $statusInstance->getSeverity(),
+                        'severity' => (int) $statusInstance->getSeverity(),
                         'message' => $statusInstance->getMessage(),
                         'title' => $statusInstance->getTitle(),
                     );

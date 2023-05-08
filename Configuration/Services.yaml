@@ -1,0 +1,18 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  BrainAppeal\T3monitor\:
+    resource: '../Classes/*'
+    exclude:
+      - '../Classes/Domain/Model/*'
+      - '../Classes/Exception/*'
+      - '../Classes/**/Exception.php'
+
+  BrainAppeal\T3monitor\Service\DataCollector:
+    public: true
+
+  BrainAppeal\T3monitor\CoreApi\CoreApiFactory:
+    public: true

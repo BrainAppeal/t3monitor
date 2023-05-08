@@ -1,5 +1,5 @@
-# cat=basic/enable/100; type=string; label=LLL:EXT:t3monitor/Resources/Private/Language/locallang_be.xml:encryption_key
+# cat=basic/enable/100; type=string; label=LLL:EXT:t3monitor/Resources/Private/Language/locallang_be.xlf:encryption_key
 encryption_key =
 
-# cat=basic/enable/101; type=string; label=LLL:EXT:t3monitor/Resources/Private/Language/locallang_be.xml:exclude_local
+# cat=basic/enable/101; type=string; label=LLL:EXT:t3monitor/Resources/Private/Language/locallang_be.xlf:exclude_local
 exclude_local =

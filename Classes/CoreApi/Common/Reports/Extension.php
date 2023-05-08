@@ -25,12 +25,11 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
+namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Package\PackageManager;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-if (defined('PATH_t3lib') && file_exists(PATH_t3lib . 'class.t3lib_install.php')) {
-    require_once(PATH_t3lib . 'class.t3lib_install.php');
-}
+
 /**
  * Report class for extensions
  *
@@ -38,84 +37,20 @@ if (defined('PATH_t3lib') && file_exists(PATH_t3lib . 'class.t3lib_install.php')
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
+class Extension extends AbstractReport
 {
-
-    /**
-     * Extension list manager
-     *
-     * @var tx_em_Extensions_List|SC_mod_tools_em_index
-     */
-    private $emList;
-
-    /**
-     * Extension details manager
-     *
-     * @var tx_em_Extensions_Details|SC_mod_tools_em_index
-     */
-    private $emDetails;
-
-    /**
-     * Default constructor
-     */
-    public function __construct()
-    {
-        $this->init();
-    }
-
-    /**
-     * Initializes the class properties
-     */
-    private function init()
-    {
-        $t3ver = Tx_T3monitor_Service_Compatibility::getTypo3Version(true);
-        if ($t3ver >= 6000000) {
-            // Starting from TYPO3 6.1, the database will connect itself when
-            // needed
-            if ($t3ver < 6001000) {
-                \TYPO3\CMS\Frontend\Utility\EidUtility::initTCA();
-            }
-        } elseif ($t3ver >= 4005000) {
-            require_once(Tx_T3monitor_Service_Compatibility::getPathTypo3() . '/sysext/em/classes/extensions/class.tx_em_extensions_list.php');
-            require_once(Tx_T3monitor_Service_Compatibility::getPathTypo3() . '/sysext/em/classes/extensions/class.tx_em_extensions_details.php');
-            $this->emList = Tx_T3monitor_Service_Compatibility::makeInstance('tx_em_Extensions_List');
-            $this->emDetails = Tx_T3monitor_Service_Compatibility::makeInstance('tx_em_Extensions_Details');
-        } else {
-            require_once(Tx_T3monitor_Service_Compatibility::getPathTypo3() . '/mod/tools/em/class.em_index.php');
-            $this->emList = Tx_T3monitor_Service_Compatibility::makeInstance('SC_mod_tools_em_index');
-
-            //@see SC_mod_tools_em_index::init
-            // GLOBAL Paths
-            $this->emList->typePaths = Array(
-                'S' => TYPO3_mainDir . 'sysext/',
-                'G' => TYPO3_mainDir . 'ext/',
-                'L' => 'typo3conf/ext/'
-            );
-            // GLOBAL BackPaths
-            $this->emList->typeBackPaths = Array(
-                'S' => '../../../',
-                'G' => '../../../',
-                'L' => '../../../../' . TYPO3_mainDir
-            );
-            // GLOBAL excludeForPackaging
-            $this->emList->excludeForPackaging = $GLOBALS['TYPO3_CONF_VARS']['EXT']['excludeForPackaging'];
-            $this->emDetails = $this->emList;
-        }
-    }
     private function getInstalledExtensions()
     {
         $extensions = null;
-        if ($this->emList !== null) {
-            $exts = $this->emList->getInstalledExtensions();
-            if (!$exts || !$exts[0]){
-                throw new Exception('ERROR: Extension list could not be loaded!');
-            }
-            $extensions = $exts[0];
-        } else {
+        if (class_exists(\TYPO3\CMS\Extbase\Object\ObjectManager::class)) {
             /* @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
-            $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Extbase\\Object\\ObjectManager');
+            $objectManager = $this->coreApi->makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class);
             /* @var \TYPO3\CMS\Extensionmanager\Utility\ListUtility $listUtility */
-            $listUtility = $objectManager->get('TYPO3\\CMS\\Extensionmanager\\Utility\\ListUtility');
+            $listUtility = $objectManager->get(\TYPO3\CMS\Extensionmanager\Utility\ListUtility::class);
+            $extensions = $listUtility->getAvailableAndInstalledExtensionsWithAdditionalInformation();
+        } else {
+            /* @var \TYPO3\CMS\Extensionmanager\Utility\ListUtility $listUtility */
+            $listUtility = $this->coreApi->makeInstance(\TYPO3\CMS\Extensionmanager\Utility\ListUtility::class);
             $extensions = $listUtility->getAvailableAndInstalledExtensionsWithAdditionalInformation();
         }
         return $extensions;
@@ -124,26 +59,20 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
     /**
      * Get reports for extensions that are installed in typo3conf/ext (local)
      *
-     * @param Tx_T3monitor_Reports_Reports $reportHandler
+     * @param \BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler
      * @throws Exception
      */
-    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
+    public function addReports(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler)
     {
         global $TYPO3_LOADED_EXT;
         $loadedExtensions = [];
-        if (Tx_T3monitor_Service_Compatibility::isTypo3VersionGte10()) {
-            $packageManager = GeneralUtility::makeInstance(PackageManager::class);
-            foreach ($packageManager->getActivePackages() as $package) {
-                $loadedExtensions[$package->getPackageKey()] = [
-                    'key' => $package->getPackageKey(),
-                    'path' => $package->getPackagePath(),
-                    'type' => strpos($package->getPackagePath(), 'sysext' . DIRECTORY_SEPARATOR) === false ? 'L' : 'S',
-                ];
-            }
-        } elseif ($GLOBALS['TYPO3_LOADED_EXT']) {
-            $loadedExtensions = $GLOBALS['TYPO3_LOADED_EXT'];
-        } elseif ($TYPO3_LOADED_EXT) {
-            $loadedExtensions = $TYPO3_LOADED_EXT;
+        $packageManager = $this->coreApi->makeInstance(PackageManager::class);
+        foreach ($packageManager->getActivePackages() as $package) {
+            $loadedExtensions[$package->getPackageKey()] = [
+                'key' => $package->getPackageKey(),
+                'path' => $package->getPackagePath(),
+                'type' => strpos($package->getPackagePath(), 'sysext' . DIRECTORY_SEPARATOR) === false ? 'L' : 'S',
+            ];
         }
         $extensions = $this->getInstalledExtensions();
         $config = $this->getConfig();
@@ -152,7 +81,7 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
         $noExcludes = empty($excludeList);
 
         $extOutput = array();
-        $basePath = Tx_T3monitor_Service_Compatibility::getPublicPath();
+        $basePath = Environment::getPublicPath() . '/';;
         $extPath = $basePath . 'typo3conf/ext/';
         // Generate output
         if (array_key_exists(0, $loadedExtensions)) {
@@ -240,7 +169,7 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
             $where = 'type = 255 AND tstamp > ' . $minLoginTstamp
                 . ' AND tstamp < ' . $modTstamp;
 
-            $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
+            $db = $this->coreApi->getDatabase();
             $loginList = $db->fetchList($select, $from, $where, $orderBy);
             krsort($loginList);
             $userList = array();
@@ -325,14 +254,15 @@ class Tx_T3monitor_Reports_Extension extends Tx_T3monitor_Reports_Abstract
             $md5Array = $this->emDetails->serverExtensionMD5array($extKey, $conf);
         // TYPO3 >= 6
         } else {
-            // Creates upload-array - including filelist.
-            $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(
-                'TYPO3\\CMS\\Extbase\\Object\\ObjectManager'
-            );
-            /* @var $objectManager \TYPO3\CMS\Extbase\Object\ObjectManager */
-            $objectName = 'TYPO3\\CMS\\Extensionmanager\\Utility\\FileHandlingUtility';
+            if (class_exists(\TYPO3\CMS\Extbase\Object\ObjectManager::class)) {
+                /* @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
+                $objectManager = $this->coreApi->makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class);
+                $fileUtility = $objectManager->get(\TYPO3\CMS\Extensionmanager\Utility\FileHandlingUtility::class);
+            } else {
+                $fileUtility = $this->coreApi->makeInstance(\TYPO3\CMS\Extensionmanager\Utility\FileHandlingUtility::class);
+            }
             /* @var $fileUtility \TYPO3\CMS\Extensionmanager\Utility\FileHandlingUtility */
-            $fileUtility = $objectManager->get($objectName);
+            // Creates upload-array - including filelist.
             $excludePattern = $GLOBALS['TYPO3_CONF_VARS']['EXT']['excludeForPackaging'];
 
             if (method_exists($fileUtility, 'getExtensionDir')) {

@@ -25,6 +25,9 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
+namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+use TYPO3\CMS\Core\Core\Environment;
+
 /**
  * Report class for disc.
  *
@@ -32,23 +35,25 @@
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_T3monitor_Reports_Disc extends Tx_T3monitor_Reports_Abstract
+class Disc extends AbstractReport
 {
     /**
      * Create reports
      *
-     * @param Tx_T3monitor_Reports_Reports $reportHandler
+     * @param Reports $reportHandler
      */
-    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
+    public function addReports(Reports $reportHandler)
     {
-        $info = array();
-        $basePath = Tx_T3monitor_Service_Compatibility::getPublicPath();
-        $totalDiskSpace = disk_total_space($basePath);
-        $freeDiskSpace = disk_free_space($basePath);
-        $usedDiskSpace = $totalDiskSpace - $freeDiskSpace;
-        $info['total_space'] = $totalDiskSpace;
-        $info['free_space'] = $freeDiskSpace;
-        $info['used_space'] = $usedDiskSpace;
+        $info = [];
+        if (function_exists('disk_total_space') && function_exists('disk_free_space')) {
+            $basePath = Environment::getPublicPath() . '/';
+            $totalDiskSpace = disk_total_space($basePath);
+            $freeDiskSpace = disk_free_space($basePath);
+            $usedDiskSpace = $totalDiskSpace - $freeDiskSpace;
+            $info['total_space'] = $totalDiskSpace;
+            $info['free_space'] = $freeDiskSpace;
+            $info['used_space'] = $usedDiskSpace;
+        }
         $sizeInfo = $this->getDirSizeInfo($basePath);
         $dirSizes = $sizeInfo['subdirs'];
         $dirSizes['_root'] = $sizeInfo['root'];
@@ -57,24 +62,24 @@ class Tx_T3monitor_Reports_Disc extends Tx_T3monitor_Reports_Abstract
         $reportHandler->add('disc', $info);
     }
     /**
-     * Get size informations for given directory
+     * Get size information for given directory
      *
      * @param string $dir
      * @return array
      */
-    private function getDirSizeInfo($dir)
+    private function getDirSizeInfo(string $dir): array
     {
-        $subDirList = array(
-            'subdirs' => array(),
-            'files' => array(),
-        );
+        $subDirList = [
+            'subdirs' => [],
+            'files' => [],
+        ];
         $sumFileSize = 0;
         $sumTotal = 0;
         if (is_dir($dir) && $checkDir = opendir($dir)) {
             // add all files found to array
             while ($file = readdir($checkDir)) {
                 $absPath = $dir . $file;
-                if ($file != '.' && $file != '..'){
+                if ($file !== '.' && $file !== '..'){
                     if (is_dir($absPath)){
                         $size = -1;
                         if(!is_link($absPath)){
@@ -99,24 +104,23 @@ class Tx_T3monitor_Reports_Disc extends Tx_T3monitor_Reports_Abstract
      * Calculate the size of the given directory
      *
      * @param string $directory Absolute directory path
-     * @return integer Size of directory in bytes
+     * @return int Size of directory in bytes
      */
-    private function dirSize($directory)
+    private function dirSize(string $directory): int
     {
         $size = 0;
-        $osIsWindows = \Tx_T3monitor_Service_Compatibility::isWindows();
-        if(!$osIsWindows){
-            //Returns size in Kilobytes
+        if(!Environment::isWindows()){
+            // Returns size in Kilobytes
             $result = explode("\t", exec("du --summarize ".$directory) , 2);
-            if(count($result) > 1 && $result[1] == $directory){
+            if(count($result) > 1 && $result[1] === $directory){
                 $size = $result[0];
             }
-            //Kilobyte => Byte
-            $size = $size * 1024;
+            // Kilobyte => Byte
+            $size *= 1024;
         }
         if(empty($size)){
             //Returns size in Bytes
-            $size = $this->_dirSize($directory);
+            $size = $this->dirSizeRecursive($directory);
         }
         return $size;
     }
@@ -125,23 +129,23 @@ class Tx_T3monitor_Reports_Disc extends Tx_T3monitor_Reports_Abstract
      * Fallback function to calculate total size of dir
      *
      * @param string $directory Absolute path to directory
-     * @return integer Size of directory in bytes
+     * @return int Size of directory in bytes
      */
-    private function _dirSize($directory)
+    private function dirSizeRecursive(string $directory): int
     {
         $size = 0;
-        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory)) as $file) {
-            /* @var $file SplFileInfo */
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory)) as $file) {
+            /* @var $file \SplFileInfo */
             $isReadable = true;
             try {
                 $isReadable = !$file->isLink() && $file->isReadable();
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 unset($e);
             }
             if ($isReadable) {
                 try {
                     $size += $file->getSize();
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     unset($e);
                 }
             }

@@ -25,6 +25,9 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
+namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+use TYPO3\CMS\Core\Core\Environment;
+
 /**
  * Report class for additional applications.
  *
@@ -32,18 +35,17 @@
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_T3monitor_Reports_Applications extends Tx_T3monitor_Reports_Abstract
+class Applications extends AbstractReport
 {
-
     /**
      * Create reports
      *
-     * @param Tx_T3monitor_Reports_Reports $dataHandler
+     * @param Reports $dataHandler
      */
-    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
+    public function addReports(Reports $reportHandler)
     {
         $info = array();
-        $cmsPublicPath = Tx_T3monitor_Service_Compatibility::getPublicPath();
+        $cmsPublicPath = Environment::getPublicPath() . '/';
         $checkApps = array(
             'piwik' => [
                 'check_files' => [

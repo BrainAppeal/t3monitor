@@ -25,6 +25,7 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
+namespace BrainAppeal\T3monitor\Helper;
 /**
  * Timer for duration of function calls
  *
@@ -32,7 +33,7 @@
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_T3monitor_Helper_Timer
+class Timer
 {
     /**
      * Contains timer infos for different keys
@@ -40,45 +41,50 @@ class Tx_T3monitor_Helper_Timer
      * @var array
      */
     private $timeData;
+
     /**
      * Default constructor
      */
     public function __construct()
     {
-        $this->timeData = array();
+        $this->timeData = [];
     }
+
     /**
      * Starts the timing for function calls identified by $key
      *
-     * @return string $key A unique identifier
+     * @param string $key A unique identifier
      */
-    public function start($key)
+    public function start(string $key): void
     {
-        $this->timeData[$key] = array(
+        $this->timeData[$key] = [
             'start' => microtime(true)
-        );
+        ];
     }
+
     /**
      * Stops the timing for function calls identified by $key
      *
      * @param string $key A unique identifier
      */
-    public function stop($key){
+    public function stop(string $key): void
+    {
         $mStop = microtime(true);
         $this->timeData[$key]['stop'] = $mStop;
         $mStart = $this->timeData[$key]['start'];
         $this->timeData[$key]['duration'] = $mStop - $mStart;
     }
+
     /**
      * Creates summary for function call durations
      *
      * @return array List of duration in microseconds for all defined keys
      */
-    public function getSummary()
+    public function getSummary(): array
     {
-        $summary = array();
-        foreach($this->timeData as $key => $data){
-            if(isset($data['duration'])){
+        $summary = [];
+        foreach ($this->timeData as $key => $data) {
+            if (isset($data['duration'])) {
                 $summary[$key] = $data['duration'];
             }
         }

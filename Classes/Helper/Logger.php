@@ -25,6 +25,9 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
+namespace BrainAppeal\T3monitor\Helper;
+use TYPO3\CMS\Core\Core\Environment;
+
 /**
  * Helper for logging
  *
@@ -32,7 +35,7 @@
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_T3monitor_Helper_Logger
+class Logger
 {
 
     /**
@@ -82,7 +85,7 @@ class Tx_T3monitor_Helper_Logger
     {
         $this->enabled = false;
         if (!empty($logfile)) {
-            $absPath = Tx_T3monitor_Service_Compatibility::getPublicPath() . $logfile;
+            $absPath = Environment::getPublicPath() . '/' . $logfile;
             $this->absLogfile = $absPath;
             $absDir = dirname($absPath);
             $this->enabled = is_dir($absDir) && is_writable($absDir);
@@ -91,7 +94,7 @@ class Tx_T3monitor_Helper_Logger
                 if (file_exists($this->absLogfile)) {
                     if ((filesize($this->absLogfile) > 1000000)) {
                         $fileEnd = strtolower(substr(strrchr($this->absLogfile, '.'), 0));
-                        $newFileEnd = '_' . strftime('%d-%m-%Y_%H-%M-%S') . $fileEnd;
+                        $newFileEnd = '_' . date('d-m-Y_H-i-s') . $fileEnd;
                         $oldLogName = str_replace($fileEnd, $newFileEnd, $this->absLogfile);
                         if (rename($this->absLogfile, $oldLogName)) {
                             @chmod($oldLogName, 0777);

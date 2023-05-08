@@ -24,29 +24,20 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
+
+namespace BrainAppeal\T3monitor\CoreApi\Common\Database;
+
+use TYPO3\CMS\Core\SingletonInterface;
+
 /**
  * Helper class for database access. Implements singleton pattern.
- * (t3lib_Singleton interface not used for compatibility with TYPO3 4.2
- * This class required PHP >= 5.5
  *
  * @category TYPO3
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_T3monitor_Helper_Database implements Tx_T3monitor_Helper_DatabaseInterface
+class Database implements DatabaseInterface, SingletonInterface
 {
-    /**
-     * Singleton instance
-     *
-     * @var Tx_T3monitor_Helper_Database
-     */
-    private static $_instance = null;
-    /**
-     * Connection to database?
-     *
-     * @var boolean
-     */
-    private $isConnected;
 
     /**
      * List of tables with table information
@@ -54,41 +45,6 @@ class Tx_T3monitor_Helper_Database implements Tx_T3monitor_Helper_DatabaseInterf
      * @var array
      */
     private $tableInfo;
-    /**
-     * Default constructor
-     */
-    public function __construct()
-    {
-        $this->init();
-    }
-    private function init()
-    {
-        $this->isConnected = true;
-    }
-
-    /**
-     * (Static) function that returns the Singleton instance of this class.
-     *
-     * Usage: $db = Tx_T3monitor_Helper_Database::getInstance();
-     *
-     * @return Tx_T3monitor_Helper_Database The class instance (Singleton)
-     */
-    public static function getInstance()
-    {
-        if (self::$_instance == null) {
-            self::$_instance = new Tx_T3monitor_Helper_Database();
-        }
-        return self::$_instance;
-    }
-    /**
-     * Returns whether database connection exists.
-     *
-     * @return boolean
-     */
-    public function isConnected()
-    {
-        return $this->isConnected;
-    }
 
     /**
      * Find start page; If root page is shortcut, the tree is traversed
@@ -105,9 +61,9 @@ class Tx_T3monitor_Helper_Database implements Tx_T3monitor_Helper_DatabaseInterf
     /**
      * Find first content page row starting from root
      *
-     * @param integer $pid Parent id
-     * @param integer $uid Page id
-     * @param integer $recCount Recursive call counter (MAX: 10)
+     * @param int $pid Parent id
+     * @param int $uid Page id
+     * @param int $recCount Recursive call counter (MAX: 10)
      * @return array Page row array
      */
     private function findContentPageRow($pid, $uid, $recCount = 0)
@@ -115,7 +71,9 @@ class Tx_T3monitor_Helper_Database implements Tx_T3monitor_Helper_DatabaseInterf
         //If shortcuts are not configured correctly, an infinite loop would be
         //possible (2 shortcuts referencing each other)
         //=> break after max. 10 recursive calls
-        if($recCount > 10) return null;
+        if($recCount > 10) {
+            return null;
+        }
         $select = 'uid, doktype, shortcut, shortcut_mode';
         $where = '';
         if($uid > 0){
@@ -125,21 +83,19 @@ class Tx_T3monitor_Helper_Database implements Tx_T3monitor_Helper_DatabaseInterf
         }
         $where .= 'deleted = 0 AND hidden = 0 AND doktype < 254';
         $row = $this->fetchRow($select, 'pages', $where, 'sorting ASC');
-        if(!empty($row)){
-            //Shortcut
-            if($row['doktype'] == 4) {
-                $scPid = $row['uid'];
-                $scUid = 0;
-                //First subpage or random subpage of current page
-                if($row['shortcut_mode'] == 0  && $row['shortcut'] > 0){
-                    $scPid = 0;
-                    $scUid = $row['shortcut'];
-                }
-                if($scPid == $pid && $scUid == $uid){
-                    return null;
-                }
-                $row = $this->findContentPageRow($scPid, $scUid, $recCount+1);
+        //Shortcut
+        if(!empty($row) && (int) $row['doktype'] === 4) {
+            $scPid = $row['uid'];
+            $scUid = 0;
+            //First subpage or random subpage of current page
+            if($row['shortcut_mode'] == 0  && $row['shortcut'] > 0){
+                $scPid = 0;
+                $scUid = $row['shortcut'];
             }
+            if($scPid == $pid && $scUid == $uid){
+                return null;
+            }
+            $row = $this->findContentPageRow($scPid, $scUid, $recCount+1);
         }
         return $row;
 
@@ -148,7 +104,7 @@ class Tx_T3monitor_Helper_Database implements Tx_T3monitor_Helper_DatabaseInterf
     /**
      * @return array
      */
-    public function getTablesInfo()
+    public function getTablesInfo(): array
     {
         /** @var \TYPO3\CMS\Core\Database\ConnectionPool $cp */
         $cp = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class);
@@ -161,7 +117,7 @@ class Tx_T3monitor_Helper_Database implements Tx_T3monitor_Helper_DatabaseInterf
             $queryBuilder->select('*')
                 ->from('information_schema.TABLES');
             $tables = $queryBuilder->execute()->fetchAll();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $tables = [];
         }
         if (!empty($tables)) {
@@ -278,13 +234,5 @@ class Tx_T3monitor_Helper_Database implements Tx_T3monitor_Helper_DatabaseInterf
         $defaultConnection = $cp->getConnectionByName(\TYPO3\CMS\Core\Database\ConnectionPool::DEFAULT_CONNECTION_NAME);
         $result = $defaultConnection->getServerVersion();
         return $result;
-    }
-
-    /**
-     * @internal
-     */
-    public function getDatabaseConnection()
-    {
-        return $GLOBALS['TYPO3_DB']; //NOT USED HERE
     }
 }

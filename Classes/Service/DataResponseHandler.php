@@ -27,31 +27,43 @@
 
 namespace BrainAppeal\T3monitor\Service;
 
+use BrainAppeal\T3monitor\Helper\Config;
+use BrainAppeal\T3monitor\Helper\Encryption;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Core\Http\HtmlResponse;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Main service class which creates and sends reports for this TYPO3 installation
- *
- * @category TYPO3
- * @package T3Monitor
- * @subpackage Service
  */
-class Dispatcher
+class DataResponseHandler
 {
+    public function createErrorResponse(\Throwable $e)
+    {
+        $message = $e->getMessage() . ' [' . $e->getFile() . '::' . $e->getLine() . ']';
+        return new HtmlResponse($message, 403, [
+            'Content-Type' => 'text/plain; charset=utf-8',
+        ]);
+    }
 
     /**
      * Fetches the content and builds a content file out of it
      *
-     * @param ServerRequestInterface $request the current request object
+     * @param array $data the report data
      * @return ResponseInterface the modified response
-     * @throws \InvalidArgumentException
      */
-    public function processRequest(ServerRequestInterface $request): ResponseInterface
+    public function createResponse(array $data): ResponseInterface
     {
-        /** @var DataCollector $dataCollector */
-        $dataCollector = GeneralUtility::makeInstance(DataCollector::class);
-        return $dataCollector->processRequest($request);
+        $config = GeneralUtility::makeInstance(Config::class);
+        if ($encKey = $config->getEncryptionKey(true)) {
+            $xml = GeneralUtility::array2xml($data, '', 0, 'xml');
+            $crypt = new Encryption();
+            $encStr = $crypt->encrypt($encKey, $xml);
+        } else {
+            $encStr = 'Incorrect configuration';
+        }
+        return new HtmlResponse($encStr, 200, [
+            'Content-Type' => 'text/plain; charset=utf-8',
+        ]);
     }
 }
