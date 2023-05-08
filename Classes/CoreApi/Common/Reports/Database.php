@@ -25,6 +25,8 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
+namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+
 /**
  * Reports for database.
  *
@@ -32,19 +34,19 @@
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_T3monitor_Reports_Database extends Tx_T3monitor_Reports_Abstract
+class Database extends AbstractReport
 {
     /**
      * Returns information about the database tables
      *
-     * @param Tx_T3monitor_Reports_Reports $reportHandler
+     * @param Reports $reportHandler
      */
-    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
+    public function addReports(Reports $reportHandler)
     {
-        $dbInfo = array();
-        $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
+        $dbInfo = [];
+        $db = $this->coreApi->getDatabase();
         $tables = $db->getTablesInfo();
-        $collations = array();
+        $collations = [];
         foreach($tables as $table => $tInfo){
             $collation = strtolower($tInfo['collation']);
             $dbInfo[$table] = $tInfo;
@@ -57,8 +59,8 @@ class Tx_T3monitor_Reports_Database extends Tx_T3monitor_Reports_Abstract
             $collations[$collation] = 1;
         }
         $reportHandler->add('database', $dbInfo);
-        $info = array();
-        //Add report for used database collation
+        $info = [];
+        // Add report for used database collation
         $severity = self::INFO;
         $collations = array_keys($collations);
         if(count($collations) > 1){
@@ -66,19 +68,19 @@ class Tx_T3monitor_Reports_Database extends Tx_T3monitor_Reports_Abstract
             $value = implode(', ', $collations);
         } else {
             $value = current($collations);
-            //Show warning if utf-8 is not used
+            // Show warning if utf-8 is not used
             if(strpos($value, 'utf8') === false){
                 $severity = self::WARNING;
             }
         }
 
         //System reports
-        $system = array(
-            'DbCollation' => array(
+        $system = [
+            'DbCollation' => [
                 'value' => $value,
                 'severity' => $severity,
-            ),
-        );
+            ],
+        ];
         $info['system'] = $system;
         $reportHandler->add('reports', $info);
     }

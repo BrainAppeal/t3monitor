@@ -24,7 +24,7 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
-
+namespace BrainAppeal\T3monitor\Helper;
 /**
  * Helper for data encryption and decryption
  *
@@ -32,7 +32,7 @@
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_T3monitor_Helper_Encryption
+class Encryption
 {
     private $encryptionType = 'default';
 

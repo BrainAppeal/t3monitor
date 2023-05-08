@@ -24,54 +24,34 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
+
+namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
 /**
- * Abstract report class
+ * Report class for links.
  *
  * @category TYPO3
  * @package T3Monitor
  * @subpackage Reports
- *
- * @see tx_reports_reports_Status
  */
-abstract class Tx_T3monitor_Reports_Abstract
+class Links extends AbstractReport
 {
-    //Constants copied from tx_reports_reports_Status
-    const NOTICE = -2;
-    const INFO = -1;
-    const OK = 0;
-    const WARNING = 1;
-    const ERROR = 2;
     /**
-     * Configuration object
+     * Create reports
      *
-     * @var Tx_T3monitor_Helper_Config
+     * @param Reports $reportHandler
      */
-    private $config;
-
-    /**
-     * Asdsign configuration instance
-     *
-     * @param Tx_T3monitor_Helper_Config $config
-     */
-    public function setConfig($config)
+    public function addReports(Reports $reportHandler)
     {
-        $this->config = $config;
+        $info = array();
+        $table = 'tx_linkvalidator_link';
+        $db = $this->coreApi->getDatabase();
+        $tables = $db->getTablesInfo();
+        if (isset($tables[$table])) {
+            $select = '*';
+            $orderBy = 'uid ASC';
+            $where = '';
+            $info = $db->fetchList($select, $table, $where, $orderBy);
+        }
+        $reportHandler->add('linkvalidator', $info);
     }
-
-    /**
-     * Returns configuration instance
-     *
-     * @return Tx_T3monitor_Helper_Config
-     */
-    protected function getConfig()
-    {
-        return $this->config;
-    }
-
-    /**
-     * Adds the reports of this class to the report handler
-     *
-     * @param Tx_T3monitor_Reports_Reports $reportHandler
-     */
-    public abstract function addReports(Tx_T3monitor_Reports_Reports $reportHandler);
 }

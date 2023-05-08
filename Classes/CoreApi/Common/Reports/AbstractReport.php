@@ -24,33 +24,60 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
+namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+use BrainAppeal\T3monitor\CoreApi\CoreApiInterface;
+use BrainAppeal\T3monitor\Helper\Config;
 
 /**
- * Report class for links.
+ * Abstract report class
  *
  * @category TYPO3
  * @package T3Monitor
  * @subpackage Reports
+ *
+ * @see tx_reports_reports_Status
  */
-class Tx_T3monitor_Reports_Links extends Tx_T3monitor_Reports_Abstract
+abstract class AbstractReport
 {
+    //Constants copied from tx_reports_reports_Status
+    const NOTICE = -2;
+    const INFO = -1;
+    const OK = 0;
+    const WARNING = 1;
+    const ERROR = 2;
+
     /**
-     * Create reports
+     * Configuration object
      *
-     * @param Tx_T3monitor_Reports_Reports $reportHandler
+     * @var \BrainAppeal\T3monitor\Helper\Config
      */
-    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
+    private $config;
+
+    /**
+     * Core API
+     *
+     * @var CoreApiInterface
+     */
+    protected $coreApi;
+
+    public function __construct(CoreApiInterface $coreApi)
     {
-        $info = array();
-        $table = 'tx_linkvalidator_link';
-        $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
-        $tables = $db->getTablesInfo();
-        if (isset($tables[$table])) {
-            $select = '*';
-            $orderBy = 'uid ASC';
-            $where = '';
-            $info = $db->fetchList($select, $table, $where, $orderBy);
-        }
-        $reportHandler->add('linkvalidator', $info);
+        $this->coreApi = $coreApi;
+        $this->config = $this->coreApi->makeInstance(Config::class);
     }
+
+    /**
+     * @return Config
+     */
+    protected function getConfig(): Config
+    {
+        return $this->config;
+    }
+
+    /**
+     * Adds the reports of this class to the report handler
+     *
+     * @param \BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler
+     */
+    public abstract function addReports(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler);
 }

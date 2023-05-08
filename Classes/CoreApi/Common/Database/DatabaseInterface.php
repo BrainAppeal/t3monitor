@@ -1,10 +1,8 @@
 <?php
 
-interface Tx_T3monitor_Helper_DatabaseInterface
+namespace BrainAppeal\T3monitor\CoreApi\Common\Database;
+interface DatabaseInterface
 {
-    public static function getInstance();
-
-    public function isConnected();
 
     public function getStartPage();
 
@@ -17,6 +15,4 @@ interface Tx_T3monitor_Helper_DatabaseInterface
     public function fullQuoteStr($string, $table);
 
     public function getDatabaseVariable($variableName);
-
-    public function getDatabaseConnection();
 }

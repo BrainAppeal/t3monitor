@@ -24,6 +24,11 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
+namespace BrainAppeal\T3monitor\Helper;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\SingletonInterface;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+
 /**
  * Helper for configuration
  *
@@ -31,8 +36,16 @@
  * @package T3Monitor
  * @subpackage Helper
  */
-class Tx_T3monitor_Helper_Config
+class Config implements SingletonInterface
 {
+
+    /**
+     * The extension key
+     *
+     * @var string
+     */
+    public const EXT_KEY = 't3monitor';
+
     /**
      * The secret encryption key; all send data are encrypted with this key.
      * This is used to prevent security issues if the secret key
@@ -70,18 +83,13 @@ class Tx_T3monitor_Helper_Config
      */
     private $excludeExtList;
 
-    /**
-     * Enables or disables logging (Debugging only)
-     *
-     * @var boolean
-     */
-    private $activateLogging = false;
-    /**
-     * Absolute path to log file if logging is enabled
-     *
-     * @var string
-     */
-    private $logfilePath;
+    public function __construct()
+    {
+        $extConfig = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get(self::EXT_KEY);
+        $this->setEncryptionKey($extConfig['encryption_key']);
+        $excludeExtList = explode(',', $extConfig['exclude_local']);
+        $this->setExcludeExtList($excludeExtList);
+    }
 
     /**
      * Returns the encryption key. If $forLocalEncryption flag is true, only the part of the key used for local
@@ -143,7 +151,7 @@ class Tx_T3monitor_Helper_Config
 
     /**
      *
-     * @return integer
+     * @return int
      */
     public function getMinTstamp()
     {
@@ -167,41 +175,5 @@ class Tx_T3monitor_Helper_Config
     public function setExcludeExtList($excludeExtList)
     {
         $this->excludeExtList = (array) $excludeExtList;
-    }
-
-    /**
-     *
-     * @return boolean
-     */
-    public function getActivateLogging()
-    {
-        return $this->activateLogging;
-    }
-
-    /**
-     *
-     * @param boolean $activateLogging
-     */
-    public function setActivateLogging($activateLogging)
-    {
-        $this->activateLogging = $activateLogging;
-    }
-
-    /**
-     *
-     * @return string
-     */
-    public function getLogfilePath()
-    {
-        return $this->logfilePath;
-    }
-
-    /**
-     *
-     * @param string $logfilePath
-     */
-    public function setLogfilePath($logfilePath)
-    {
-        $this->logfilePath = $logfilePath;
     }
 }

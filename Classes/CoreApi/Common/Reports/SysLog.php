@@ -25,6 +25,12 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 
+namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Error\ErrorHandler;
+use TYPO3\CMS\Core\Log\LogManager;
+use TYPO3\CMS\Core\Log\Writer\FileWriter;
+
 /**
  * Reports for sys log entries.
  *
@@ -32,14 +38,14 @@
  * @package T3Monitor
  * @subpackage Reports
  */
-class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
+class SysLog extends AbstractReport
 {
     /**
      * Returns information about the database tables
      *
-     * @param Tx_T3monitor_Reports_Reports $reportHandler
+     * @param \BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler
      */
-    public function addReports(Tx_T3monitor_Reports_Reports $reportHandler)
+    public function addReports(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler)
     {
         $this->addSysLogReports($reportHandler);
         $this->addLogFileReports($reportHandler);
@@ -48,32 +54,25 @@ class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
     /**
      * Returns logging information from the log files
      *
-     * @param Tx_T3monitor_Reports_Reports $reportHandler
+     * @param \BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler
      */
-    private function addLogFileReports(Tx_T3monitor_Reports_Reports $reportHandler)
+    private function addLogFileReports(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler)
     {
-        if (class_exists(\TYPO3\CMS\Core\Log\LogManager::class)
-            && class_exists(\TYPO3\CMS\Core\Error\ErrorHandler::class)
-            && class_exists(\TYPO3\CMS\Core\Log\Writer\FileWriter::class)) {
-            $logManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class);
-            $errorLogger = $logManager->getLogger(\TYPO3\CMS\Core\Error\ErrorHandler::class);
-            $writers = $errorLogger->getWriters();
-            $cWriter = $writers['critical'][0] ?? null;
-            $info = [];
-            if ($cWriter instanceof \TYPO3\CMS\Core\Log\Writer\FileWriter) {
-                $logFile = $cWriter->getLogFile();
-                $lines = $this->readLastLinesFromFile($logFile, 50);
-                $info['log'] = $lines;
-            }
-            if (class_exists(\TYPO3\CMS\Core\Core\Environment::class)) {
-                $varPath = \TYPO3\CMS\Core\Core\Environment::getVarPath();
-            } else {
-                $varPath = \Tx_T3monitor_Service_Compatibility::getPublicPath() . 'typo3temp/var';
-            }
-            $varDirSizes = $this->getGroupedDirectorySize($varPath);
-            $info['dir_sizes'] = $varDirSizes;
-            $reportHandler->add('var', $info);
+        /** @var LogManager $logManager */
+        $logManager = $this->coreApi->makeInstance(LogManager::class);
+        $errorLogger = $logManager->getLogger(ErrorHandler::class);
+        $writers = $errorLogger->getWriters();
+        $cWriter = $writers['critical'][0] ?? null;
+        $info = [];
+        if ($cWriter instanceof FileWriter) {
+            $logFile = $cWriter->getLogFile();
+            $lines = $this->readLastLinesFromFile($logFile, 50);
+            $info['log'] = $lines;
         }
+        $varPath = Environment::getVarPath();
+        $varDirSizes = $this->getGroupedDirectorySize($varPath);
+        $info['dir_sizes'] = $varDirSizes;
+        $reportHandler->add('var', $info);
     }
 
     /**
@@ -86,7 +85,7 @@ class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
         $bytesTotal = [];
         $path = realpath($basePath);
         if(!empty($path) && file_exists($path)){
-            foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS)) as $object){
+            foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)) as $object){
                 /** @var \SplFileInfo $object */
                 $paths = explode(DIRECTORY_SEPARATOR, trim(str_replace($basePath, '', $object->getPath()), DIRECTORY_SEPARATOR));
                 $pathKey = $paths[0];
@@ -148,7 +147,7 @@ class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
 
         // Read it and adjust line number if necessary
         // (Otherwise the result would be wrong if file doesn't end with a blank line)
-        if (fread($f, 1) != "\n") $lines -= 1;
+        if (fread($f, 1) !== "\n") $lines -= 1;
 
         // Start reading
         $output = '';
@@ -192,12 +191,12 @@ class Tx_T3monitor_Reports_SysLog extends Tx_T3monitor_Reports_Abstract
     /**
      * Returns logging information from the sys_log table
      *
-     * @param Tx_T3monitor_Reports_Reports $reportHandler
+     * @param \BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler
      */
-    private function addSysLogReports(Tx_T3monitor_Reports_Reports $reportHandler)
+    private function addSysLogReports(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler)
     {
         $info = array();
-        $db = Tx_T3monitor_Helper_DatabaseFactory::getInstance();
+        $db = $this->coreApi->getDatabase();
         $config = $this->getConfig();
         $minTstamp = (int) $config->getMinTstamp();
         $limit = '';

@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 2.0.0 (2023-05-02)
+
+- [FEATURE] Added support for TYPO3 12 LTS (12.4)
+- [TASK] Breaking: Removed support for TYPO3 4.5 - 9.5 (since it's highly unlikely, that any extension updates will be released for these TYPO3 versions)
+
 ## 1.2.14 (2023-01-09)
 
 - [BUGFIX] fix undefined array key in directory size calculation

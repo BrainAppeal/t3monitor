@@ -10,7 +10,7 @@
  * writing. "version" and "dependencies" must not be touched!
  ***************************************************************/
 
-$EM_CONF['t3monitor'] = array(
+$EM_CONF['t3monitor'] = [
 	'title' => 'T3Monitor',
 	'description' => 'Monitors TYPO3 installation for updates and security issues (Requires an account on www.t3monitor.de)',
 	'category' => 'misc',
@@ -18,7 +18,7 @@ $EM_CONF['t3monitor'] = array(
 	'author_email' => 'feedback@t3monitor.de',
 	'author_company' => 'Brain Appeal GmbH',
 	'shy' => '',
-	'version' => '1.2.15',
+	'version' => '2.0.0',
 	'priority' => '',
 	'module' => '',
 	'state' => 'stable',
@@ -28,14 +28,13 @@ $EM_CONF['t3monitor'] = array(
 	'modify_tables' => '',
 	'clearCacheOnLoad' => 0,
 	'lockType' => '',
-	'constraints' => array(
-		'depends' => array(
-			'php' => '5.3.0-0.0.0',
-			'typo3' => '4.5.0-11.5.99',
-		),
-		'conflicts' => array(
-		),
-		'suggests' => array(
-		),
-	),
-);
+	'constraints' => [
+		'depends' => [
+			'typo3' => '10.4.30-12.4.99',
+        ],
+		'conflicts' => [
+        ],
+		'suggests' => [
+        ],
+    ],
+];
