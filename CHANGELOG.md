@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 2.0.1 (2023-09-29)
+
+- [TASK] Improve TSFE initialization for TYPO3 11 and 12
+
 ## 2.0.0 (2023-05-08)
 
 - [FEATURE] Added support for TYPO3 12 LTS (12.4)

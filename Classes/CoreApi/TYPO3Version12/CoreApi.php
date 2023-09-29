@@ -13,6 +13,7 @@ use TYPO3\CMS\Core\Site\Entity\NullSite;
 use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 use TYPO3\CMS\Install\Report\InstallStatusReport;
 
@@ -69,7 +70,7 @@ class CoreApi extends AbstractCoreApi
         /** @var Site $site */
         $pageArguments = $request->getAttribute('routing', null);
         if (null === $pageArguments) {
-            $pageArguments = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Routing\PageArguments::class, 1, '0', []);
+            $pageArguments = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Routing\PageArguments::class, $rootPageId, '0', []);
         }
         $nullFrontend = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Cache\Frontend\NullFrontend::class, 'pages');
         $cacheManager = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Cache\CacheManager::class);
@@ -81,7 +82,7 @@ class CoreApi extends AbstractCoreApi
         // @see \TYPO3\CMS\Redirects\Service\RedirectService::bootFrontendController
         if (!isset($GLOBALS['TSFE']) || !$GLOBALS['TSFE'] instanceof TypoScriptFrontendController) {
             $context = GeneralUtility::makeInstance(Context::class);
-            $feUserAuth = new \TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication();
+            $feUserAuth = GeneralUtility::makeInstance(FrontendUserAuthentication::class);
 
             $controller = GeneralUtility::makeInstance(
                 TypoScriptFrontendController::class,
