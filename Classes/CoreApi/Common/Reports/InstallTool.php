@@ -71,7 +71,7 @@ class InstallTool extends AbstractReport
             $addCreateChange = $schemaMigrator->getUpdateSuggestions($sqlStatements);
             // Aggregate the per-connection statements into one flat array
             $schemaUpdates['add'] = array_merge_recursive(...array_values($addCreateChange));
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             unset($e);
         }
 
@@ -81,7 +81,7 @@ class InstallTool extends AbstractReport
             $dropRename = $schemaMigrator->getUpdateSuggestions($sqlStatements, true);
             // Aggregate the per-connection statements into one flat array
             $schemaUpdates['remove'] = array_merge_recursive(...array_values($dropRename));
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             unset($e);
         }
 

@@ -117,7 +117,7 @@ class SysLog extends AbstractReport
                 }
             }
             return [];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return [
                 $e->getMessage() . ' ['.$e->getFile() . '::' . $e->getLine().']'
             ];
@@ -206,20 +206,19 @@ class SysLog extends AbstractReport
         }
         $select = 'tstamp, details, log_data';
         $from = 'sys_log';
-        $orderBy = 'tstamp DESC';
         $limit = 30;
 
         //Load PHP errors
         $where = 'error = 1 AND type = 5'.$tsCond;
-        $info['php_errors'] = $db->fetchList($select, $from, $where, $orderBy, $limit);
+        $info['php_errors'] = $db->fetchList($select, $from, $where, ['tstamp' => 'DESC'], $limit);
 
         //Successful backend logins
         $where = 'error = 0 AND type = 255'.$tsCond;
-        $info['backend_logins'] = $db->fetchList($select, $from, $where, $orderBy, $limit);
+        $info['backend_logins'] = $db->fetchList($select, $from, $where, ['tstamp' => 'DESC'], $limit);
 
         //Failed backend logins
         $where = 'error = 3'.$tsCond;
-        $info['failed_backend_logins'] = $db->fetchList($select, $from, $where, $orderBy, $limit);
+        $info['failed_backend_logins'] = $db->fetchList($select, $from, $where, ['tstamp' => 'DESC'], $limit);
 
         $reportHandler->add('sys_log', $info);
     }

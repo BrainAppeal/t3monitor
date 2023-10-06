@@ -40,7 +40,7 @@ class Applications extends AbstractReport
     /**
      * Create reports
      *
-     * @param Reports $dataHandler
+     * @param Reports $reportHandler
      */
     public function addReports(Reports $reportHandler)
     {
@@ -69,17 +69,17 @@ class Applications extends AbstractReport
                     $fileContent = file_get_contents($vFile);
                     preg_match($appConfig['pattern'], $fileContent, $versionMatches);
                     if (!empty($versionMatches[1])) {
-                        $info[ucfirst($app) . 'Version'] = array(
+                        $info[ucfirst($app) . 'Version'] = [
                             'value' => $versionMatches[1],
                             'severity' => -2,
-                        );
+                        ];
                         break;
                     }
                 }
             }
         }
         if (!empty($info)) {
-            $reportsInfo = array();
+            $reportsInfo = [];
             $reportsInfo['applications'] = $info;
             $reportHandler->add('reports', $reportsInfo);
         }

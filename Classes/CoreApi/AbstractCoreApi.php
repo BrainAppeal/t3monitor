@@ -20,11 +20,20 @@ use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Localization\LanguageService;
+use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
+use TYPO3\CMS\Core\Site\Entity\NullSite;
+use TYPO3\CMS\Core\Site\Entity\SiteInterface;
+use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\VersionNumberUtility;
+use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 
 abstract class AbstractCoreApi implements CoreApiInterface {
 
+    /**
+     * @var ?int
+     */
+    protected $rootPageId;
 
     /**
      * @return DatabaseInterface
@@ -67,13 +76,13 @@ abstract class AbstractCoreApi implements CoreApiInterface {
 
     public function initialize(ServerRequestInterface $request): void
     {
+        $this->initializeRequest($request);
+    }
+
+    protected function initializeRequest(ServerRequestInterface $request): void
+    {
         if (!isset($GLOBALS['TYPO3_REQUEST'])) {
             $GLOBALS['TYPO3_REQUEST'] = $request;
-        }
-        $this->initTsfe($request);
-
-        if (!isset($GLOBALS['LANG']) || !is_object($GLOBALS['LANG'])) {
-            $GLOBALS['LANG'] = GeneralUtility::makeInstance(LanguageService::class);
         }
     }
 
@@ -99,12 +108,11 @@ abstract class AbstractCoreApi implements CoreApiInterface {
         return $returnIntFromVer ? self::convertVersionNumberToInteger($cmsVersion->getVersion()) : $cmsVersion->getVersion();
     }
 
-    abstract protected function initTsfe(ServerRequestInterface $request): void;
+    abstract public function getTsfe(): ?TypoScriptFrontendController;
 
-
-    public function getReportInstances(array $params): array
+    protected function getAvailableReportsClassMap(): array
     {
-        $availableReports = [
+        return [
             'internal' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\Internal::class,
             'security' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\Security::class,
             'installed_extensions' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\Extension::class,
@@ -116,6 +124,11 @@ abstract class AbstractCoreApi implements CoreApiInterface {
             'applications' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\Applications::class,
             'install_tool' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\InstallTool::class,
         ];
+    }
+
+    public function getReportInstances(array $params): array
+    {
+        $availableReports = $this->getAvailableReportsClassMap();
         return $this->createReportInstances($availableReports, $params);
     }
 
@@ -139,10 +152,72 @@ abstract class AbstractCoreApi implements CoreApiInterface {
         $reportInstances = [];
         foreach($availableReports as $key => $className){
             if(in_array($key, $enabledReports, false)){
-                /** @noinspection PhpParamsInspection */
                 $reportInstances[$key] = $this->makeInstance($className, $this);
             }
         }
         return $reportInstances;
     }
+
+    /**
+     * Returns the root page id for the current request/site or null if root page id was not determined before
+     * @return int|null
+     */
+    public function getRootPageId(): ?int
+    {
+        if (null === $this->rootPageId) {
+            $site = $this->getSite();
+            $rootPageId = $site->getRootPageId();
+            if (!$rootPageId) {
+                $db = $this->getDatabase();
+                $startRow = $db->getStartPage();
+                if (!empty($startRow)) {
+                    $rootPageId = (int) $startRow['uid'];
+                }
+            }
+            $this->rootPageId = $rootPageId;
+        }
+        return $this->rootPageId;
+    }
+
+    public function getLanguageService(): LanguageService
+    {
+        if (!isset($GLOBALS['LANG']) || !($GLOBALS['LANG'] instanceof LanguageService)) {
+            $site = $this->getSite();
+            /** @var LanguageServiceFactory $languageServiceFactory */
+            $languageServiceFactory = GeneralUtility::makeInstance(LanguageServiceFactory::class);
+            $siteLanguage = $site->getDefaultLanguage();
+            $GLOBALS['LANG'] = $languageServiceFactory->createFromSiteLanguage($siteLanguage);
+        }
+        return $GLOBALS['LANG'];
+    }
+
+    public function getSite(): SiteInterface
+    {
+        $site = null;
+        if (isset($GLOBALS['TYPO3_REQUEST'])) {
+            /** @var ServerRequestInterface $request */
+            $request = $GLOBALS['TYPO3_REQUEST'];
+            $site = $request->getAttribute('site', null);
+            if (null === $site) {
+                $httpHost = GeneralUtility::getIndpEnv('HTTP_HOST');
+                $sites = GeneralUtility::makeInstance(SiteFinder::class)->getAllSites();
+                $site = reset($sites);
+                if (count($sites) > 1) {
+                    foreach ($sites as $checkSite) {
+                        if ($site->getBase()->getHost() === $httpHost) {
+                            $site = $checkSite;
+                        }
+                    }
+                }
+                if ($site instanceof SiteInterface) {
+                    $GLOBALS['TYPO3_REQUEST'] = $request->withAttribute('site', $site);
+                }
+            }
+        }
+        if (!($site instanceof SiteInterface)) {
+            $site = new NullSite();
+        }
+        return $site;
+    }
+
 }

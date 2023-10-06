@@ -78,9 +78,9 @@ class Internal extends AbstractReport
                 }
             }
             // Fix missing translations in \TYPO3\CMS\Reports\Report\Status\Typo3Status
-            $languageService = $this->getLanguageService();
+            $languageService = $this->coreApi->getLanguageService();
             if (null !== $languageService && method_exists($languageService, 'includeLLFile')) {
-                $this->getLanguageService()->includeLLFile('EXT:reports/Resources/Private/Language/locallang_reports.xlf');
+                $languageService->includeLLFile('EXT:reports/Resources/Private/Language/locallang_reports.xlf');
             }
             foreach ($reportClasses as $statusProviderId => $reportClassNames) {
                 foreach ($reportClassNames as $reportClass) {
@@ -94,7 +94,7 @@ class Internal extends AbstractReport
                                 $status[$statusProviderId] = array_merge($status[$statusProviderId], $statuses);
                             }
                         }
-                    } catch (\Exception $e) {
+                    } catch (\Throwable $e) {
                         unset($e);
                     }
                 }
@@ -102,23 +102,25 @@ class Internal extends AbstractReport
             foreach ($status as $group => $groupStatusList) {
                 /** @var \TYPO3\CMS\Reports\Status $statusInstance */
                 foreach ($groupStatusList as $statusName => $statusInstance) {
-                    $internalReports[$group][$statusName] = array(
-                        'value' => $statusInstance->getValue(),
-                        'severity' => (int) $statusInstance->getSeverity(),
-                        'message' => $statusInstance->getMessage(),
-                        'title' => $statusInstance->getTitle(),
-                    );
+                    $internalReports[$group][$statusName] = $this->createStatusInfoArray($statusInstance);
                 }
             }
             $reportHandler->add('reports', $internalReports);
         }
     }
 
-    /**
-     * @return LanguageService
-     */
-    protected function getLanguageService()
+    protected function createStatusInfoArray(\TYPO3\CMS\Reports\Status $statusInstance): array
     {
-        return $GLOBALS['LANG'];
+        if ($statusInstance->getSeverity() instanceof \TYPO3\CMS\Core\Type\ContextualFeedbackSeverity) {
+            $severity = $statusInstance->getSeverity()->value;
+        } else {
+            $severity = (int) $statusInstance->getSeverity();
+        }
+        return [
+            'value' => $statusInstance->getValue(),
+            'severity' => $severity,
+            'message' => $statusInstance->getMessage(),
+            'title' => $statusInstance->getTitle(),
+        ];
     }
 }

@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 2.0.2 (2023-10-06)
+
+- [TASK] Improve exception handling
+- [TASK] Skip initialization of TSFE, when it is not needed
+
 ## 2.0.1 (2023-09-29)
 
 - [TASK] Improve TSFE initialization for TYPO3 11 and 12

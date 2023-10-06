@@ -41,6 +41,7 @@ class DataResponseHandler
     public function createErrorResponse(\Throwable $e)
     {
         $message = $e->getMessage() . ' [' . $e->getFile() . '::' . $e->getLine() . ']';
+        $message .= "\n" . $e->getTraceAsString();
         return new HtmlResponse($message, 403, [
             'Content-Type' => 'text/plain; charset=utf-8',
         ]);

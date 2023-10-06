@@ -139,13 +139,13 @@ class Disc extends AbstractReport
             $isReadable = true;
             try {
                 $isReadable = !$file->isLink() && $file->isReadable();
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 unset($e);
             }
             if ($isReadable) {
                 try {
                     $size += $file->getSize();
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     unset($e);
                 }
             }
