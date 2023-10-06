@@ -17,6 +17,8 @@ namespace BrainAppeal\T3monitor\CoreApi;
 use BrainAppeal\T3monitor\CoreApi\Common\Database\DatabaseInterface;
 use BrainAppeal\T3monitor\CoreApi\Common\Reports\AbstractReport;
 use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Core\Localization\LanguageService;
+use TYPO3\CMS\Core\Site\Entity\SiteInterface;
 
 interface CoreApiInterface {
 
@@ -45,4 +47,12 @@ interface CoreApiInterface {
      * @return DatabaseInterface
      */
     public function getDatabase(): DatabaseInterface;
+
+    /**
+     * Returns the root page id for the current request/site or null if root page id was not determined before
+     * @return int|null
+     */
+    public function getRootPageId(): ?int;
+    public function getLanguageService(): LanguageService;
+    public function getSite(): SiteInterface;
 }

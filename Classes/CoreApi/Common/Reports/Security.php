@@ -77,40 +77,23 @@ class Security extends AbstractReport
             $reportsInfo['security'] = array_merge($reportsInfo['security'], $additionalSecurityReports);
         }
         //Extend typo3 system reports with additional reports
-        $this->addAdditonalReports($reportsInfo);
+        $this->addAdditionalReports($reportsInfo);
         $reportHandler->add('reports', $reportsInfo);
     }
-    protected function addAdditonalReports(&$reportsInfo): void
+    protected function addAdditionalReports(&$reportsInfo): void
     {
-        $reportsInfo['typo3']['StartPage'] = $this->getStartPageIdReport();
+        // Find id of start page (root page of current site)
+        $pageId = (int) $this->coreApi->getRootPageId();
+        $reportsInfo['typo3']['StartPage'] = [
+            'value' => (int) $this->coreApi->getRootPageId(),
+            'severity' => empty($pageId) ? self::ERROR : self::OK,
+        ];
         if (empty($reportsInfo['typo3']['Typo3Version'])) {
             $reportsInfo['typo3']['Typo3Version'] = array(
                 'value' => $this->coreApi->getTypo3Version(),
                 'severity' => -2,
             );
         }
-    }
-    /**
-     * Find id of start page (real id, no shortcuts)
-     *
-     * @return array Report data
-     */
-    private function getStartPageIdReport(): array
-    {
-        //id of start page; if null, rootline is not configured correctly
-        $db = $this->coreApi->getDatabase();
-        $startRow = $db->getStartPage();
-        $pageId = 0;
-        $severity = self::ERROR;
-        if (!empty($startRow)) {
-            $pageId = $startRow['uid'];
-            $severity = self::OK;
-        }
-        $report = [
-            'value' => $pageId,
-            'severity' => $severity,
-        ];
-        return $report;
     }
 
     /**
@@ -344,25 +327,27 @@ class Security extends AbstractReport
                 }
             }
         }
-        $checkResult = [
+        return [
             'value' => $value,
             'severity' => $severity,
         ];
-        return $checkResult;
     }
     /**
      * Get status reports from system extension "reports" (Does not have to be installed)
      *
-     * @return array|bool Array with report infos; returns false if reports Extension was not found
+     * @return array Array with report infos; returns empty array if reports extension was not found
      */
     protected function getReportsFromExt()
     {
-        $reportsInfo = array();
+        $reportsInfo = [];
         // TYPO3 >= 10.4
         if (!empty($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['reports']['tx_reports']['status']['providers'])
             && interface_exists(\TYPO3\CMS\Reports\StatusProviderInterface::class)) {
+            // Ensure that $GLOBALS['LANG'] is set
+            $this->coreApi->getLanguageService();
             foreach ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['reports']['tx_reports']['status']['providers'] as $group => $statusProvidersList) {
                 foreach ($statusProvidersList as $statusProvider) {
+                    $statusProviderInstance = null;
                     try {
                         $statusProviderInstance = $this->coreApi->makeInstance($statusProvider);
                         if (is_a($statusProviderInstance, \TYPO3\CMS\Reports\StatusProviderInterface::class)) {
@@ -376,15 +361,23 @@ class Security extends AbstractReport
                                 /** @var \TYPO3\CMS\Reports\Status $sObj */
                                 $reportsInfo[$group][$sKey] = array(
                                     'value' => $sObj->getValue(),
-                                    'severity' => (int) $sObj->getSeverity(),
+                                    'severity' => (int)$sObj->getSeverity(),
                                 );
                             }
                         }
-                    } catch (\Exception $e) {
-                        $reportsInfo['exceptions'][$e->getCode()] = array(
-                            'value' => $e->getMessage(),
+                    } catch (\TYPO3\CMS\Core\Routing\RouteNotFoundException $e) {
+                        // ignore route exceptions
+                        unset($e);
+                    } catch (\Throwable $e) {
+                        $message = 'Error in ' . __FILE__ . '::' . __LINE__ . ': '
+                            . $e->getMessage() . ' [' . $e->getFile() . '::' . $e->getLine() . ']';
+                        if ($statusProviderInstance !== null) {
+                            $message .= '[StatusProvider: ' . get_class($statusProviderInstance) . ']';
+                        }
+                        $reportsInfo['exceptions'][] = [
+                            'value' => $message,
                             'severity' => 2,
-                        );
+                        ];
                         unset($e);
                     }
                 }

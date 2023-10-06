@@ -48,9 +48,8 @@ class Links extends AbstractReport
         $tables = $db->getTablesInfo();
         if (isset($tables[$table])) {
             $select = '*';
-            $orderBy = 'uid ASC';
             $where = '';
-            $info = $db->fetchList($select, $table, $where, $orderBy);
+            $info = $db->fetchList($select, $table, $where, ['uid' => 'ASC']);
         }
         $reportHandler->add('linkvalidator', $info);
     }

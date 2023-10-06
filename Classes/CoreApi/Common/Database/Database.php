@@ -117,7 +117,7 @@ class Database implements DatabaseInterface, SingletonInterface
             $queryBuilder->select('*')
                 ->from('information_schema.TABLES');
             $tables = $queryBuilder->execute()->fetchAll();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $tables = [];
         }
         if (!empty($tables)) {
@@ -129,9 +129,9 @@ class Database implements DatabaseInterface, SingletonInterface
                     $correctedTables[$table['TABLE_NAME']] = [
                         'name' => $table['TABLE_NAME'],
                         'rows' => (int) $table['TABLE_ROWS'],
-                        'data_length' => $table['DATA_LENGTH'] ? $table['DATA_LENGTH'] : 0,
-                        'collation' => $table['TABLE_COLLATION'] ? $table['TABLE_COLLATION'] : '',
-                        'engine' => $table['ENGINE'] ? $table['ENGINE'] : '',
+                        'data_length' => $table['DATA_LENGTH'] ?: 0,
+                        'collation' => $table['TABLE_COLLATION'] ?: '',
+                        'engine' => $table['ENGINE'] ?: '',
                     ];
                 }
             }
@@ -172,8 +172,7 @@ class Database implements DatabaseInterface, SingletonInterface
         $queryResult = $statement->from($from)
             ->where($where)
             ->execute();
-        $result = $queryResult->fetch();
-        return $result;
+        return $queryResult->fetch();
     }
 
     /**
@@ -182,30 +181,28 @@ class Database implements DatabaseInterface, SingletonInterface
      * @param string $select SELECT string
      * @param string $from FROM string
      * @param string $where WHERE string
-     * @param string $orderBy ORDER BY string
+     * @param array $orderBy ORDER BY field list
      * @param string $limit Optional LIMIT value, if none, supply blank string.
      *
      * @return array Table rows or empty array
      */
-    public function fetchList($select, $from, $where, $orderBy, $limit = '')
+    public function fetchList($select, $from, $where, array $orderBy = [], $limit = '')
     {
         /** @var \TYPO3\CMS\Core\Database\Query\QueryBuilder $queryBuilder */
         $queryBuilder = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class)->getQueryBuilderForTable($from);
         $queryBuilder->resetRestrictions();
-        $select = explode(', ', $select);
-        $orderBy = explode(' ', $orderBy);
-        $statement = $queryBuilder;
-//        ->select(...$select) // Cant use this because we need to ensure that the extension also works with < PHP5.6
-        call_user_func_array(array($statement,'select'), $select);
+        $selectFields = explode(', ', $select);
+        $statement = $queryBuilder
+            ->select(...$selectFields);
         $statement->from($from)
             ->where($where);
-//          ->orderBy(...$orderBy); // Cant use this because we need to ensure that the extension also works with < PHP5.6
-        call_user_func_array(array($statement,'orderBy'), $orderBy);
+        foreach ($orderBy as $field => $order) {
+            $statement->addOrderBy($field, $order);
+        }
         if ($limit !== '') {
             $statement->setMaxResults($limit);
         }
-        $records = $statement->execute()->fetchAll();
-        return $records;
+        return $statement->execute()->fetchAll();
     }
 
     /**
@@ -232,7 +229,6 @@ class Database implements DatabaseInterface, SingletonInterface
     {
         $cp = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class);
         $defaultConnection = $cp->getConnectionByName(\TYPO3\CMS\Core\Database\ConnectionPool::DEFAULT_CONNECTION_NAME);
-        $result = $defaultConnection->getServerVersion();
-        return $result;
+        return $defaultConnection->getServerVersion();
     }
 }

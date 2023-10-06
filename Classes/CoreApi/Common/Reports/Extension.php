@@ -39,7 +39,7 @@ use TYPO3\CMS\Core\Package\PackageManager;
  */
 class Extension extends AbstractReport
 {
-    private function getInstalledExtensions()
+    protected function getInstalledExtensions()
     {
         $extensions = null;
         if (class_exists(\TYPO3\CMS\Extbase\Object\ObjectManager::class)) {
@@ -107,12 +107,12 @@ class Extension extends AbstractReport
                 }
                 $extReport = array();
                 $extReport['ext'] = $extKey;
-                $extReport['title'] = $emConf['title'];
-                $extReport['author'] = $emConf['author'];
-                $extReport['state'] = $emConf['state'];
-                $extReport['description'] = $emConf['description'];
-                $extReport['version'] = $emConf['version'];
-                $extReport['constraints'] = $emConf['constraints'];
+                $extReport['title'] = $emConf['title'] ?? '';
+                $extReport['author'] = $emConf['author'] ?? '';
+                $extReport['state'] = $emConf['state'] ?? '';
+                $extReport['description'] = $emConf['description'] ?? '';
+                $extReport['version'] = $emConf['version'] ?? '';
+                $extReport['constraints'] = $emConf['constraints'] ?? '';
                 $extReport['installedBy'] = $this->findUserWhoInstalledExtension($absExtPath);
                 $this->removeEmptyKeys($extReport['constraints']);
                 $iconFile = '';
@@ -165,14 +165,13 @@ class Extension extends AbstractReport
             $minLoginTstamp = $modTstamp - 86400;
             $select = 'userid, type, tstamp, action';
             $from = 'sys_log';
-            $orderBy = 'tstamp DESC';
             $where = 'type = 255 AND tstamp > ' . $minLoginTstamp
                 . ' AND tstamp < ' . $modTstamp;
 
             $db = $this->coreApi->getDatabase();
-            $loginList = $db->fetchList($select, $from, $where, $orderBy);
+            $loginList = $db->fetchList($select, $from, $where, ['tstamp' => 'DESC']);
             krsort($loginList);
-            $userList = array();
+            $userList = [];
             foreach ($loginList as $row) {
                 $userId = $row['userid'];
                 $loggedIn = $row['action'] == 1;
@@ -184,9 +183,8 @@ class Extension extends AbstractReport
                 $userIds = array_keys($userList);
                 $select = 'uid, username, admin';
                 $from = 'be_users';
-                $orderBy = 'uid ASC';
                 $where = 'uid IN ('.implode(', ', $userIds).') AND admin = 1';
-                $beUsers = $db->fetchList($select, $from, $where, $orderBy);
+                $beUsers = $db->fetchList($select, $from, $where, ['uid' => 'ASC']);
             }
             foreach ($beUsers as $userRow) {
                 if (!empty($userName)) $userName .= ' OR ';

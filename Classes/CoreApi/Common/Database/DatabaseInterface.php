@@ -10,7 +10,7 @@ interface DatabaseInterface
 
     public function fetchRow($select, $from, $where, $orderBy = '');
 
-    public function fetchList($select, $from, $where, $orderBy, $limit = '');
+    public function fetchList($select, $from, $where, array $orderBy = [], $limit = '');
 
     public function fullQuoteStr($string, $table);
 

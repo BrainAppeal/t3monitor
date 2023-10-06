@@ -92,12 +92,12 @@ class DataCollector
     private function collect(ServerRequestInterface $request): array
     {
         $params = $request->getQueryParams();
-        $secret = isset($params['secret']) ? $params['secret'] : '';
+        $secret = $params['secret'] ?? '';
         $this->assertValidKeys($secret);
 
-        $showExtendedReports = isset($params['extended']) && $params['extended'] == 1;
-        $showModifiedFiles = isset($params['changed_files']) && $params['changed_files'] == 1;
-        //Timestamp of last check
+        $showExtendedReports = isset($params['extended']) && $params['extended'];
+        $showModifiedFiles = isset($params['changed_files']) && $params['changed_files'];
+        // Timestamp of last check
         $lastCheck = isset($params['last_check']) ? (int) $params['last_check'] : 0;
         $this->config->setShowExtendedReports($showExtendedReports);
         $this->config->setShowModifiedFiles($showModifiedFiles);
@@ -125,7 +125,7 @@ class DataCollector
      */
     private function generateData(array $params)
     {
-        $onlyCheckAccess = isset($params['only_check']) && $params['only_check'] == 1;
+        $onlyCheckAccess = isset($params['only_check']) && $params['only_check'];
         if($onlyCheckAccess){
             die('OK');
         }
@@ -147,11 +147,11 @@ class DataCollector
             $timer->start($key);
             try {
                 $reportObj->addReports($reportHandler);
-            } catch (\Exception $e) {
-                $exceptions[$e->getCode()] = array(
-                    'value' => $e->getMessage(),
+            } catch (\Throwable $e) {
+                $exceptions[$e->getCode()] = [
+                    'value' => 'Exception in report ' . get_class($reportObj) . ': ' . $e->getMessage(),
                     'severity' => 2,
-                );
+                ];
                 unset($e);
             }
             $timer->stop($key);
