@@ -14,5 +14,8 @@ services:
   BrainAppeal\T3monitor\Service\DataCollector:
     public: true
 
+  BrainAppeal\T3monitor\Service\DataResponseHandler:
+    public: true
+
   BrainAppeal\T3monitor\CoreApi\CoreApiFactory:
     public: true

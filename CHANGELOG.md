@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 2.0.3 (2023-10-13)
+
+- [TASK] Remove output of exception details
+- [TASK] Remove deprecated internal logger class
+
 ## 2.0.2 (2023-10-06)
 
 - [TASK] Improve exception handling
