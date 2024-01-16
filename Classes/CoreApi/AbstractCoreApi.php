@@ -18,6 +18,7 @@ use BrainAppeal\T3monitor\CoreApi\Common\Database\Database;
 use BrainAppeal\T3monitor\CoreApi\Common\Database\DatabaseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Http\NormalizedParams;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
@@ -83,6 +84,16 @@ abstract class AbstractCoreApi implements CoreApiInterface {
     {
         if (!isset($GLOBALS['TYPO3_REQUEST'])) {
             $GLOBALS['TYPO3_REQUEST'] = $request;
+        } else {
+            /** @var ServerRequestInterface $originalRequest */
+            $originalRequest = $GLOBALS['TYPO3_REQUEST'];
+            if (null === $originalRequest->getAttribute('normalizedParams')) {
+                $normalizedParams = $request->getAttribute('normalizedParams', null);
+                if (!($normalizedParams instanceof NormalizedParams)) {
+                    $normalizedParams = NormalizedParams::createFromRequest($request);
+                }
+                $GLOBALS['TYPO3_REQUEST'] = $originalRequest->withAttribute('normalizedParams', $normalizedParams);
+            }
         }
     }
 

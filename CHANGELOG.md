@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 2.0.4 (2024-01-16)
+
+- [BUGFIX] fix null exception when calling status report checks with eID call
+- [TASK] refactor extension list report
+- [TASK] remove check for changed extension files (does not work in modern extensions)
+
 ## 2.0.3 (2023-10-13)
 
 - [TASK] Remove output of exception details

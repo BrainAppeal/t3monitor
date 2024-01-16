@@ -41,7 +41,6 @@ class Extension extends AbstractReport
 {
     protected function getInstalledExtensions()
     {
-        $extensions = null;
         if (class_exists(\TYPO3\CMS\Extbase\Object\ObjectManager::class)) {
             /* @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
             $objectManager = $this->coreApi->makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class);
@@ -57,89 +56,80 @@ class Extension extends AbstractReport
     }
 
     /**
-     * Get reports for extensions that are installed in typo3conf/ext (local)
+     * Get reports for local extensions
      *
-     * @param \BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler
-     * @throws Exception
+     * @param Reports $reportHandler
+     * @throws \Throwable
      */
-    public function addReports(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler)
+    public function addReports(Reports $reportHandler)
     {
-        global $TYPO3_LOADED_EXT;
         $loadedExtensions = [];
         $packageManager = $this->coreApi->makeInstance(PackageManager::class);
         foreach ($packageManager->getActivePackages() as $package) {
-            $loadedExtensions[$package->getPackageKey()] = [
-                'key' => $package->getPackageKey(),
-                'path' => $package->getPackagePath(),
-                'type' => strpos($package->getPackagePath(), 'sysext' . DIRECTORY_SEPARATOR) === false ? 'L' : 'S',
-            ];
+            /** @var \TYPO3\CMS\Core\Package\PackageInterface $package */
+            $packageKey = $package->getPackageKey();
+            // the full path to this package's main directory
+            $packagePath = $package->getPackagePath();
+            $isSystemExtension = strpos($packagePath, 'sysext' . DIRECTORY_SEPARATOR) !== false
+                || strpos($packagePath, 'vendor/typo3' . DIRECTORY_SEPARATOR) !== false;
+            if (!$isSystemExtension) {
+                $require = $package->getValueFromComposerManifest('require');
+                if ($require instanceof \stdClass) {
+                    $require = json_decode(json_encode($require), true);
+                }
+                $loadedExtensions[$packageKey] = [
+                    'key' => $packageKey,
+                    'path' => $packagePath,
+                    'composer' => [
+                        'name' => (string) $package->getValueFromComposerManifest('name'),
+                        'homepage' => (string) $package->getValueFromComposerManifest('homepage'),
+                        'description' => (string) $package->getValueFromComposerManifest('description'),
+                        'require' => $require,
+                    ],
+                ];
+            }
         }
         $extensions = $this->getInstalledExtensions();
         $config = $this->getConfig();
         $excludeList = $config->getExcludeExtList();
-        $showModifiedFiles = $config->getShowModifiedFiles();
         $noExcludes = empty($excludeList);
 
         $extOutput = array();
-        $basePath = Environment::getPublicPath() . '/';;
-        $extPath = $basePath . 'typo3conf/ext/';
-        // Generate output
-        if (array_key_exists(0, $loadedExtensions)) {
-            $loadedExtensionsWithKeys = [];
-            foreach ($loadedExtensions as $loadedExtension) {
-                $loadedExtensionsWithKeys[$loadedExtension['key']] = $loadedExtension;
-            }
-            $loadedExtensions = $loadedExtensionsWithKeys;
-        }
         foreach (array_keys($extensions) as $extKey) {
-            //Only add info for installed extension in typo3conf/ext (L=local)
-            //Skip all extensions in exclude list
+            // Only add info for local extension; skip all extensions in exclude list
             if (array_key_exists($extKey, $loadedExtensions)
-                && $loadedExtensions[$extKey]['type'] == 'L'
-                && ($noExcludes || !in_array($extKey, $excludeList))) {
-
-                $absExtPath = $extPath . $extKey . '/';
+                && ($noExcludes || !in_array($extKey, $excludeList, false))) {
+                $extData = $loadedExtensions[$extKey];
+                $absExtPath = rtrim($extData['path']) . DIRECTORY_SEPARATOR;
                 $extInfo = $extensions[$extKey];
                 $emConf = $extInfo;
-                // TYPO3 < 6
-                if (isset($emConf['EM_CONF'])) {
-                    $emConf = $emConf['EM_CONF'];
-                }
-                $extReport = array();
+                $extReport = [];
                 $extReport['ext'] = $extKey;
-                $extReport['title'] = $emConf['title'] ?? '';
+                $extReport['title'] = $emConf['title'] ?? $extKey;
                 $extReport['author'] = $emConf['author'] ?? '';
-                $extReport['state'] = $emConf['state'] ?? '';
+                $extReport['state'] = $emConf['state'] ?? 'stable';
                 $extReport['description'] = $emConf['description'] ?? '';
-                $extReport['version'] = $emConf['version'] ?? '';
-                $extReport['constraints'] = $emConf['constraints'] ?? '';
+                $extReport['version'] = $emConf['version'];
+                $extReport['constraints'] = $emConf['constraints'] ?? [];
                 $extReport['installedBy'] = $this->findUserWhoInstalledExtension($absExtPath);
+                $extReport['composer'] = $extData['composer'] ?? [];
                 $this->removeEmptyKeys($extReport['constraints']);
-                $iconFile = '';
-                $staticIconRelPath = 'Resources/Public/Icons/Extension.svg';
-                if (file_exists($absExtPath . $staticIconRelPath)) {
-                    $iconFile = $staticIconRelPath;
-                } elseif (isset($extInfo['ext_icon'])) {
-                    $iconFile = $extInfo['ext_icon'];
-                } elseif (!empty($extInfo['files'])) {
-                    if (in_array('ext_icon.gif', $extInfo['files'])) {
-                        $iconFile = 'ext_icon.gif';
-                    } elseif (in_array('ext_icon.png', $extInfo['files'])) {
-                        $iconFile = 'ext_icon.png';
-                    }
-                }
+                $iconFile = self::getExtensionIcon($absExtPath, false);
                 $extReport['icon_file'] = $iconFile;
-                if ($showModifiedFiles) {
-                    $extReport['changed_files'] = $this->getExtModifiedFiles(
-                        $extKey, $extInfo, $emConf
-                    );
-                }
-                //set name of log file if it exists;
-                //Required to create a link to the manual for custom extensions
-                //that are not in the TER
+                // set name of log file if it exists;
+                // Required to create a link to the manual for custom extensions that are not in the TER
                 $docFile = '';
-                if(file_exists($absExtPath . 'doc/manual.sxw')){
-                    $docFile = 'doc/manual.sxw';
+                $docFilePaths = [
+                    'Documentation/Readme.md',
+                    'README.md',
+                    'readme.md',
+                    'doc/manual.sxw',
+                    'Documentation/Index.rst',
+                ];
+                foreach ($docFilePaths as $filePath) {
+                    if (file_exists($absExtPath . $filePath)) {
+                        $docFile = $filePath;
+                    }
                 }
                 $extReport['doc_file'] = $docFile;
 
@@ -148,6 +138,35 @@ class Extension extends AbstractReport
         }
         $reportHandler->add('installed_extensions', $extOutput);
     }
+
+    /**
+     * Find extension icon
+     *
+     * @param string $extensionPath Path to extension directory.
+     * @param bool $returnFullPath Return full path of file.
+     * @see \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::getExtensionIcon
+     */
+    private static function getExtensionIcon(string $extensionPath, bool $returnFullPath = false): string
+    {
+        $icon = '';
+        // @deprecated In v13 remove the boolean array value and use the file location string as value again
+        $locationsToCheckFor = [
+            'Resources/Public/Icons/Extension.svg' => false,
+            'Resources/Public/Icons/Extension.png' => false,
+            'Resources/Public/Icons/Extension.gif' => false,
+            'ext_icon.svg' => true,
+            'ext_icon.png' => true,
+            'ext_icon.gif' => true,
+        ];
+        foreach ($locationsToCheckFor as $fileLocation => $legacyLocation) {
+            if (file_exists($extensionPath . $fileLocation)) {
+                $icon = $fileLocation;
+                break;
+            }
+        }
+        return $returnFullPath ? $extensionPath . $icon : $icon;
+    }
+
     /**
      * Find the user who most likely installed this extension. This cannot be
      * determined with absolute certainty, because no log entry is created for
@@ -174,7 +193,7 @@ class Extension extends AbstractReport
             $userList = [];
             foreach ($loginList as $row) {
                 $userId = $row['userid'];
-                $loggedIn = $row['action'] == 1;
+                $loggedIn = (int) $row['action'] === 1;
                 $userList[$userId] = $loggedIn;
             }
             $beUsers = array();
@@ -210,110 +229,18 @@ class Extension extends AbstractReport
      *      ),
      * </pre>
      *
-     * @param array $array
+     * @param array|mixed $array
      */
-    private function removeEmptyKeys(&$array){
+    private function removeEmptyKeys(&$array): void
+    {
         if (!empty($array) && is_array($array)) {
             foreach ($array as $key => &$value) {
-                if (strlen($key) == 0) {
+                if ($key === '') {
                     unset($array[$key]);
                 } elseif (is_array($value)) {
                     $this->removeEmptyKeys($value);
                 }
             }
         }
-    }
-
-    private function getExtModifiedFiles($extKey, $extInfo, $emConf)
-    {
-        $currentMd5Array = $this->serverExtensionMD5array($extKey, $extInfo);
-        $affectedFiles = array();
-        if (!empty($emConf['_md5_values_when_last_written'])
-            && strcmp($emConf['_md5_values_when_last_written'], serialize($currentMd5Array))) {
-            $lastWritten = unserialize($emConf['_md5_values_when_last_written']);
-            $files = $this->findMD5ArrayDiff($currentMd5Array, $lastWritten);
-            if (count($files)) {
-                $affectedFiles = $files;
-            }
-        }
-        return $affectedFiles;
-    }
-
-    /**
-     * Creates a MD5-hash array over the current files in the extension
-     *
-     * @param	string  $extKey Extension key
-     * @param	array   $conf   Extension information array
-     * @return	array   MD5-keys
-     */
-    private function serverExtensionMD5array($extKey, $conf) {
-        // TYPO3 < 6
-        if ($this->emDetails !== null) {
-            $md5Array = $this->emDetails->serverExtensionMD5array($extKey, $conf);
-        // TYPO3 >= 6
-        } else {
-            if (class_exists(\TYPO3\CMS\Extbase\Object\ObjectManager::class)) {
-                /* @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
-                $objectManager = $this->coreApi->makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class);
-                $fileUtility = $objectManager->get(\TYPO3\CMS\Extensionmanager\Utility\FileHandlingUtility::class);
-            } else {
-                $fileUtility = $this->coreApi->makeInstance(\TYPO3\CMS\Extensionmanager\Utility\FileHandlingUtility::class);
-            }
-            /* @var $fileUtility \TYPO3\CMS\Extensionmanager\Utility\FileHandlingUtility */
-            // Creates upload-array - including filelist.
-            $excludePattern = $GLOBALS['TYPO3_CONF_VARS']['EXT']['excludeForPackaging'];
-
-            if (method_exists($fileUtility, 'getExtensionDir')) {
-                $extensionPath = $fileUtility->getExtensionDir($extKey);
-            } else {
-                $extensionPath = $fileUtility->getAbsoluteExtensionPath($extKey);
-            }
-            // Add trailing slash to the extension path, getAllFilesAndFoldersInPath explicitly requires that.
-            $extensionPath = \TYPO3\CMS\Core\Utility\PathUtility::sanitizeTrailingSeparator($extensionPath);
-            // Get all the files of the extension, but exclude the ones specified in the excludePattern
-            $files = \TYPO3\CMS\Core\Utility\GeneralUtility::getAllFilesAndFoldersInPath(
-                array(),	// No files pre-added
-                $extensionPath,	// Start from here
-                '',		// Do not filter files by extension
-                false,		// Include subdirectories
-                99,		// Recursion level
-                $excludePattern	// Files and directories to exclude.
-            );
-            // Make paths relative to extension root directory.
-            $relFiles = \TYPO3\CMS\Core\Utility\GeneralUtility::removePrefixPathFromList($files, $extensionPath);
-            $md5Array = array();
-            if (is_array($relFiles)) {
-                // Traverse files.
-                foreach ($relFiles as $relPath) {
-                    if ($relPath != 'ext_emconf.php') {
-                        $file = $extensionPath . $relPath;
-                        $contentMd5 = \TYPO3\CMS\Core\Utility\GeneralUtility::getUrl($file);
-                        $md5Array[$relPath] = substr(md5($contentMd5), 0, 4);
-                    }
-                }
-            }
-        }
-        return $md5Array;
-    }
-
-    /**
-     * Compares two arrays with MD5-hash values for analysis of which files has changed.
-     *
-     * @param	array   $current    Current values
-     * @param	array   $past       Past values
-     * @return	array   Affected files
-     */
-    private static function findMD5ArrayDiff($current, $past) {
-        if (!is_array($current)) {
-            $current = array();
-        }
-        if (!is_array($past)) {
-            $past = array();
-        }
-        $filesInCommon = array_intersect($current, $past);
-        $diff1 = array_keys(array_diff($past, $filesInCommon));
-        $diff2 = array_keys(array_diff($current, $filesInCommon));
-        $affectedFiles = array_unique(array_merge($diff1, $diff2));
-        return $affectedFiles;
     }
 }

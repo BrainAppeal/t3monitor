@@ -45,8 +45,8 @@ class Disc extends AbstractReport
     public function addReports(Reports $reportHandler)
     {
         $info = [];
+        $basePath = Environment::getPublicPath() . '/';
         if (function_exists('disk_total_space') && function_exists('disk_free_space')) {
-            $basePath = Environment::getPublicPath() . '/';
             $totalDiskSpace = disk_total_space($basePath);
             $freeDiskSpace = disk_free_space($basePath);
             $usedDiskSpace = $totalDiskSpace - $freeDiskSpace;

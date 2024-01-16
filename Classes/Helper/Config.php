@@ -57,12 +57,6 @@ class Config implements SingletonInterface
     private $encryptionKey = '';
 
     /**
-     * Show changed files in extension
-     *
-     * @var boolean
-     */
-    private $showModifiedFiles;
-    /**
      * Show additional information in reports. Useful for report data which
      * cost a lot of time to process
      *
@@ -111,24 +105,6 @@ class Config implements SingletonInterface
     public function setEncryptionKey($encryptionKey)
     {
         $this->encryptionKey = (string) trim($encryptionKey);
-    }
-
-    /**
-     *
-     * @return boolean
-     */
-    public function getShowModifiedFiles()
-    {
-        return $this->showModifiedFiles;
-    }
-
-    /**
-     *
-     * @param boolean $showModifiedFiles
-     */
-    public function setShowModifiedFiles($showModifiedFiles)
-    {
-        $this->showModifiedFiles = (boolean) $showModifiedFiles;
     }
 
     /**

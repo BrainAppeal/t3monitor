@@ -96,11 +96,9 @@ class DataCollector
         $this->assertValidKeys($secret);
 
         $showExtendedReports = isset($params['extended']) && $params['extended'];
-        $showModifiedFiles = isset($params['changed_files']) && $params['changed_files'];
         // Timestamp of last check
         $lastCheck = isset($params['last_check']) ? (int) $params['last_check'] : 0;
         $this->config->setShowExtendedReports($showExtendedReports);
-        $this->config->setShowModifiedFiles($showModifiedFiles);
         $this->config->setMinTstamp($lastCheck);
 
         $this->initialize($request);
@@ -110,10 +108,8 @@ class DataCollector
     /**
      * Initializes the class properties
      * @param ServerRequestInterface $request
-     * @throws ExtensionConfigurationExtensionNotConfiguredException
-     * @throws ExtensionConfigurationPathDoesNotExistException
      */
-    private function initialize(ServerRequestInterface $request)
+    private function initialize(ServerRequestInterface $request): void
     {
         $compatFactory = GeneralUtility::makeInstance(CoreApiFactory::class);
         $compatInstance = $compatFactory->getCoreApi();
