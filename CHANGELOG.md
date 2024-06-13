@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 2.0.6 (2024-06-13)
+
+- [BUGFIX] fix usage of service registry if EXT:reports is not installed
+
 ## 2.0.5 (2024-06-13)
 
 - [TASK] improve creation of status reports for TYPO3 12

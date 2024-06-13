@@ -51,7 +51,7 @@ class Security extends \BrainAppeal\T3monitor\CoreApi\Common\Reports\Security
             return $reportsInfo;
         }
         $container = GeneralUtility::getContainer();
-        if ($container->has(StatusRegistry::class) && interface_exists(\TYPO3\CMS\Reports\StatusProviderInterface::class)) {
+        if ($container->has(StatusRegistry::class)) {
             $this->coreApi->getLanguageService();
             /** @var StatusRegistry $statusRegistry */
             $statusRegistry = $container->get(StatusRegistry::class);

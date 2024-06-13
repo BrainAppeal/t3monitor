@@ -22,5 +22,5 @@ services:
 
   BrainAppeal\T3monitor\Registry\StatusRegistry:
     public: true
-    arguments:
-      - !tagged_iterator reports.status
+    calls:
+        - setRegistry: ['@?TYPO3\CMS\Reports\Registry\StatusRegistry']

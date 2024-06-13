@@ -13,19 +13,18 @@ use TYPO3\CMS\Reports\StatusProviderInterface;
  */
 class StatusRegistry
 {
-    /**
-     * @var StatusProviderInterface[]
-     */
-    private array $providers = [];
+    private \TYPO3\CMS\Reports\Registry\StatusRegistry $registry;
+
+    public function __construct()
+    {
+    }
 
     /**
-     * @param iterable<StatusProviderInterface> $providers
+     * @param \TYPO3\CMS\Reports\Registry\StatusRegistry $registry
+     * @return void
      */
-    public function __construct(iterable $providers)
-    {
-        foreach ($providers as $item) {
-            $this->providers[] = $item;
-        }
+    public function setRegistry(\TYPO3\CMS\Reports\Registry\StatusRegistry $registry) {
+        $this->registry = $registry;
     }
 
     /**
@@ -35,6 +34,9 @@ class StatusRegistry
      */
     public function getProviders(): array
     {
-        return $this->providers;
+        if (null === $this->registry) {
+            return [];
+        }
+        return $this->registry->getProviders();
     }
 }
