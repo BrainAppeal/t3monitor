@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 2.0.5 (2024-06-13)
+
+- [TASK] improve creation of status reports for TYPO3 12
+
 ## 2.0.4 (2024-01-16)
 
 - [BUGFIX] fix null exception when calling status report checks with eID call

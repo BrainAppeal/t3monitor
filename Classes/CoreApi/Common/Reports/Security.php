@@ -27,7 +27,10 @@
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
 
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\InstallStatusReport;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\SecurityStatusReport;
 use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Report class for security. Creates status reports similar to "reports" system extension
@@ -48,27 +51,16 @@ class Security extends AbstractReport
     public function addReports(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler)
     {
         $reportsInfo = $this->getReportsFromExt();
-        if (empty($reportsInfo)) {
-            $reportsInfo = array();
-        }
-        //If reports from parent class are empty, create reports manually
-        if (empty($reportsInfo['_install'])) {
-            $reportsInfo['_install'] = $this->getInstallReports();
-        }
+        $this->addInstallDetailedChecks($reportsInfo);
+        // If reports from parent class are empty, create reports manually
         if (empty($reportsInfo['typo3'])) {
-            $reportsInfo['typo3'] = [];
+            $reportsInfo['typo3'] = $this->getFallbackInstallReportsIfReportExtensionIsNotInstalled();
         }
         if (empty($reportsInfo['typo3']['Typo3Version'])) {
             $reportsInfo['typo3']['Typo3Version'] = [
                 'value' => $this->coreApi->getTypo3Version(),
                 'severity' => -2,
             ];
-        }
-        $additionalSystemReports = $this->getSystemReports();
-        if (empty($reportsInfo['system'])) {
-            $reportsInfo['system'] = $additionalSystemReports;
-        } else {
-            $reportsInfo['system'] = array_merge($reportsInfo['system'], $additionalSystemReports);
         }
         $additionalSecurityReports = $this->getSecurityReports();
         if (empty($reportsInfo['security'])) {
@@ -96,95 +88,93 @@ class Security extends AbstractReport
         }
     }
 
-    /**
-     * @see tx_install_report_InstallStatus
-     *
-     * @return array
-     */
-    private function getInstallReports()
+    protected function addInstallDetailedChecks(array &$reportsInfo): void
     {
-        $info = array();
-        //@see tx_install_report_InstallStatus
-        define('TYPO3_REQUIREMENTS_MINIMUM_PHP', '5.0.0');
-        define('TYPO3_REQUIREMENTS_MINIMUM_PHP_MEMORY_LIMIT', '8M');
-        define('TYPO3_REQUIREMENTS_RECOMMENDED_PHP_MEMORY_LIMIT', '16M');
-        $checkWritable = array(
-            'typo3temp/' => 2,
-            'typo3temp/pics/' => 2,
-            'typo3temp/temp/' => 2,
-            'typo3temp/llxml/' => 2,
-            'typo3temp/cs/' => 2,
-            'typo3temp/GB/' => 2,
-            'typo3temp/locks/' => 2,
-            'typo3conf/' => 2,
-            'typo3conf/ext/' => 0,
-            'typo3conf/l10n/' => 0,
-            'uploads/' => 2,
-            'fileadmin/' => -1,
-        );
-        $value = 'Writable';
-        $severity = self::OK;
-        $basePath = Environment::getPublicPath() . '/';
-        foreach ($checkWritable as $relPath => $requirementLevel) {
-            $absPath = $basePath . $relPath;
-            if (!@is_dir($absPath) || !is_writable($absPath)) {
-                $severity = $requirementLevel;
-                if ($severity === self::ERROR) {
-                    $value = 'Directory not writable';
-                    break;
-                }
+        if (class_exists(\TYPO3\CMS\Install\SystemEnvironment\Check::class)) {
+            $group = 'system';
+            if (!isset($reportsInfo[$group])) {
+                $reportsInfo[$group] = [];
             }
+            try {
+                /** @var \BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\Check $check */
+                $check = GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\Check::class);
+                $statusList = $check->getStatusList();
+            } catch (\Throwable $e) {
+                $statusList = [
+                    'checkException' => [
+                        'value' => $e->getMessage(),
+                        'severity' => 2,
+                    ],
+                ];
+            }
+            $reportsInfo[$group] = array_merge($reportsInfo[$group], $statusList);
+            try {
+                /** @var \BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\DatabaseCheck $databaseCheck */
+                $databaseCheck = GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\DatabaseCheck::class);
+                $statusList = $databaseCheck->getStatusList();
+            } catch (\Throwable $e) {
+                $statusList = [
+                    'databaseCheckException' => [
+                        'value' => $e->getMessage(),
+                        'severity' => 2,
+                    ],
+                ];
+            }
+            $reportsInfo[$group] = array_merge($reportsInfo[$group], $statusList);
+            try {
+                /** @var \BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\SetupCheck $databaseCheck */
+                $setupCheck = GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\SetupCheck::class);
+                $statusList = $setupCheck->getStatusList();
+            } catch (\Throwable $e) {
+                $statusList = [
+                    'setupCheckException' => [
+                        'value' => $e->getMessage(),
+                        'severity' => 2,
+                    ],
+                ];
+            }
+            $reportsInfo[$group] = array_merge($reportsInfo[$group], $statusList);
         }
-        $info['FileSystem'] = array(
-            'value' => $value,
-            'severity' => $severity,
-        );
-        $value = 'Update Complete';
-        $severity = self::OK;
-        $info['RemainingUpdates'] = array(
-            'value' => $value,
-            'severity' => $severity,
-        );
-        return $info;
     }
 
     /**
-     * @see tx_reports_reports_status_SystemStatus
-     *
      * @return array
      */
-    private function getSystemReports()
+    private function getFallbackInstallReportsIfReportExtensionIsNotInstalled(): array
     {
-        $info = array();
-        $severity = self::OK;
-        $value = PHP_VERSION;
-        if (version_compare($value, TYPO3_REQUIREMENTS_MINIMUM_PHP) < 0) {
-            $severity = self::ERROR;
-        }
-        $info['Php'] = array(
-            'value' => $value,
-            'severity' => $severity,
-        );
-        $severity = self::OK;
-        $memoryLimit = ini_get('memory_limit');
-        if (!empty($memoryLimit)) {
-            $mlBytes = self::getBytesFromSizeMeasurement($memoryLimit);
-            if ($mlBytes < self::getBytesFromSizeMeasurement(TYPO3_REQUIREMENTS_MINIMUM_PHP_MEMORY_LIMIT)) {
-                $severity = self::ERROR;
-            } elseif ($mlBytes < self::getBytesFromSizeMeasurement(TYPO3_REQUIREMENTS_RECOMMENDED_PHP_MEMORY_LIMIT)) {
-                $severity = self::WARNING;
+        $this->coreApi->getLanguageService();
+        $statusProviderClasses = [
+            InstallStatusReport::class,
+            SecurityStatusReport::class,
+        ];
+        $reportsInfo = [];
+        foreach ($statusProviderClasses as $statusProviderClass) {
+            /** @var \BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\StatusProviderInterface $sObj */
+            $statusProviderInstance = $this->coreApi->makeInstance($statusProviderClass);
+            try {
+                $statusObj = $statusProviderInstance->getStatus();
+                foreach ($statusObj as $sKey => $sObj) {
+                    /** @var \BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\Status $sObj */
+                    $reportsInfo[$sKey] = array(
+                        'value' => $sObj->getValue(),
+                        'severity' => $sObj->getSeverity(),
+                    );
+                }
+
+            } catch (\Throwable $e) {
+                $message = 'Error in ' . __FILE__ . '::' . __LINE__ . ': '
+                    . $e->getMessage() . ' [' . $e->getFile() . '::' . $e->getLine() . ']';
+                if ($statusProviderInstance !== null) {
+                    $message .= '[StatusProvider: ' . get_class($statusProviderInstance) . ']';
+                }
+                $reportsInfo['exceptions'][] = [
+                    'value' => $message,
+                    'severity' => 2,
+                ];
+                unset($e);
             }
         }
-        $info['PhpMemoryLimit'] = array(
-            'value' => $memoryLimit,
-            'severity' => $severity,
-        );
-        $severity = self::OK;
-        $info['Webserver'] = array(
-            'value' => $_SERVER['SERVER_SOFTWARE'],
-            'severity' => $severity,
-        );
-        return $info;
+        return $reportsInfo;
     }
 
     /**
@@ -337,7 +327,7 @@ class Security extends AbstractReport
      *
      * @return array Array with report infos; returns empty array if reports extension was not found
      */
-    protected function getReportsFromExt()
+    protected function getReportsFromExt(): array
     {
         $reportsInfo = [];
         // TYPO3 >= 10.4
@@ -353,11 +343,13 @@ class Security extends AbstractReport
                         if (is_a($statusProviderInstance, \TYPO3\CMS\Reports\StatusProviderInterface::class)) {
                             if (is_a($statusProviderInstance, \TYPO3\CMS\Reports\RequestAwareStatusProviderInterface::class)
                                 && isset($GLOBALS['TYPO3_REQUEST'])) {
-                                $statusObj = $statusProviderInstance->getStatus($GLOBALS['TYPO3_REQUEST']);
+                                $statusList = $statusProviderInstance->getStatus($GLOBALS['TYPO3_REQUEST']);
+                            } elseif (method_exists($statusProviderInstance, 'getDetailedStatus')) {
+                                $statusList = $statusProviderInstance->getDetailedStatus();
                             } else {
-                                $statusObj = $statusProviderInstance->getStatus();
+                                $statusList = $statusProviderInstance->getStatus();
                             }
-                            foreach ($statusObj as $sKey => $sObj) {
+                            foreach ($statusList as $sKey => $sObj) {
                                 /** @var \TYPO3\CMS\Reports\Status $sObj */
                                 $reportsInfo[$group][$sKey] = array(
                                     'value' => $sObj->getValue(),

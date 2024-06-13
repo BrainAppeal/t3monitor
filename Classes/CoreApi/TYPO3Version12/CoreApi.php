@@ -3,6 +3,7 @@
 namespace BrainAppeal\T3monitor\CoreApi\TYPO3Version12;
 
 use BrainAppeal\T3monitor\CoreApi\AbstractCoreApi;
+use BrainAppeal\T3monitor\CoreApi\TYPO3Version12\Reports\Security;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Backend\FrontendBackendUserAuthentication;
 use TYPO3\CMS\Core\Context\Context;
@@ -23,6 +24,12 @@ use TYPO3\CMS\Install\Report\InstallStatusReport;
  */
 class CoreApi extends AbstractCoreApi
 {
+    protected function getAvailableReportsClassMap(): array
+    {
+        $classMap = parent::getAvailableReportsClassMap();
+        $classMap['security'] = Security::class;
+        return $classMap;
+    }
 
     /**
      * Creates an instance of a class taking into account the class-extensions

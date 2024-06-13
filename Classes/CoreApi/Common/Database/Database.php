@@ -27,7 +27,9 @@
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Database;
 
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\SingletonInterface;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Helper class for database access. Implements singleton pattern.
@@ -51,12 +53,11 @@ class Database implements DatabaseInterface, SingletonInterface
      * recursively until a standard content page is found.
      * If the page tree is not configured correctly, this function returns null.
      *
-     * @return array|null
+     * @return ?array<string, mixed> Page row array
      */
-    public function getStartPage()
+    public function getStartPage(): ?array
     {
-        $row = $this->findContentPageRow(0, 0);
-        return $row;
+        return $this->findContentPageRow(0, 0);
     }
     /**
      * Find first content page row starting from root
@@ -64,9 +65,9 @@ class Database implements DatabaseInterface, SingletonInterface
      * @param int $pid Parent id
      * @param int $uid Page id
      * @param int $recCount Recursive call counter (MAX: 10)
-     * @return array Page row array
+     * @return ?array<string, mixed> Page row array
      */
-    private function findContentPageRow($pid, $uid, $recCount = 0)
+    private function findContentPageRow(int $pid, int $uid, int $recCount = 0): ?array
     {
         //If shortcuts are not configured correctly, an infinite loop would be
         //possible (2 shortcuts referencing each other)
@@ -76,7 +77,7 @@ class Database implements DatabaseInterface, SingletonInterface
         }
         $select = 'uid, doktype, shortcut, shortcut_mode';
         $where = '';
-        if($uid > 0){
+        if ($uid > 0){
             $where .= 'uid = '.$uid.' AND ';
         } else {
             $where .= 'pid = '.$pid.' AND ';
@@ -84,15 +85,15 @@ class Database implements DatabaseInterface, SingletonInterface
         $where .= 'deleted = 0 AND hidden = 0 AND doktype < 254';
         $row = $this->fetchRow($select, 'pages', $where, 'sorting ASC');
         //Shortcut
-        if(!empty($row) && (int) $row['doktype'] === 4) {
-            $scPid = $row['uid'];
+        if (!empty($row) && (int) $row['doktype'] === 4) {
+            $scPid = (int) $row['uid'];
             $scUid = 0;
             //First subpage or random subpage of current page
-            if($row['shortcut_mode'] == 0  && $row['shortcut'] > 0){
+            if((int) $row['shortcut_mode'] === 0  && $row['shortcut'] > 0){
                 $scPid = 0;
-                $scUid = $row['shortcut'];
+                $scUid = (int) $row['shortcut'];
             }
-            if($scPid == $pid && $scUid == $uid){
+            if($scPid === $pid && $scUid === $uid){
                 return null;
             }
             $row = $this->findContentPageRow($scPid, $scUid, $recCount+1);
@@ -106,9 +107,9 @@ class Database implements DatabaseInterface, SingletonInterface
      */
     public function getTablesInfo(): array
     {
-        /** @var \TYPO3\CMS\Core\Database\ConnectionPool $cp */
-        $cp = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class);
-        $defaultConnection = $cp->getConnectionByName(\TYPO3\CMS\Core\Database\ConnectionPool::DEFAULT_CONNECTION_NAME);
+        /** @var ConnectionPool $cp */
+        $cp = GeneralUtility::makeInstance(ConnectionPool::class);
+        $defaultConnection = $cp->getConnectionByName(ConnectionPool::DEFAULT_CONNECTION_NAME);
         $database = $defaultConnection->getDatabase();
         $correctedTables = [];
         $hasCollationField = false;
@@ -163,7 +164,7 @@ class Database implements DatabaseInterface, SingletonInterface
     public function fetchRow($select, $from, $where, $orderBy = '')
     {
         /** @var \TYPO3\CMS\Core\Database\Query\QueryBuilder $queryBuilder */
-        $queryBuilder = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class)->getQueryBuilderForTable($from);
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($from);
         $queryBuilder->resetRestrictions();
         $select = explode(', ', $select);
         $statement = $queryBuilder;
@@ -189,7 +190,7 @@ class Database implements DatabaseInterface, SingletonInterface
     public function fetchList($select, $from, $where, array $orderBy = [], $limit = '')
     {
         /** @var \TYPO3\CMS\Core\Database\Query\QueryBuilder $queryBuilder */
-        $queryBuilder = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class)->getQueryBuilderForTable($from);
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($from);
         $queryBuilder->resetRestrictions();
         $selectFields = explode(', ', $select);
         $statement = $queryBuilder
@@ -213,7 +214,7 @@ class Database implements DatabaseInterface, SingletonInterface
      * @return string
      * @see \TYPO3\CMS\Core\Database\DatabaseConnection::fullQuoteStr
      */
-    public function fullQuoteStr($string, $table)
+    public function fullQuoteStr($string, $table): string
     {
          return '\''.$string. '\'';
     }
@@ -225,10 +226,10 @@ class Database implements DatabaseInterface, SingletonInterface
      * @param string $variableName
      * @return string|null
      */
-    public function getDatabaseVariable($variableName)
+    public function getDatabaseVariable($variableName): ?string
     {
-        $cp = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Database\ConnectionPool::class);
-        $defaultConnection = $cp->getConnectionByName(\TYPO3\CMS\Core\Database\ConnectionPool::DEFAULT_CONNECTION_NAME);
+        $cp = GeneralUtility::makeInstance(ConnectionPool::class);
+        $defaultConnection = $cp->getConnectionByName(ConnectionPool::DEFAULT_CONNECTION_NAME);
         return $defaultConnection->getServerVersion();
     }
 }

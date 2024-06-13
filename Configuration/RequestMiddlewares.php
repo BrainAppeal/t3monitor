@@ -7,6 +7,7 @@ return [
                 'typo3/cms-frontend/output-compression',
             ],
             'after' => [
+                'typo3/cms-core/normalized-params-attribute',
                 'typo3/cms-frontend/site',
                 'typo3/cms-frontend/tsfe',
             ],

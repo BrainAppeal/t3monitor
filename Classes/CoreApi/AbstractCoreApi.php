@@ -121,6 +121,10 @@ abstract class AbstractCoreApi implements CoreApiInterface {
 
     abstract public function getTsfe(): ?TypoScriptFrontendController;
 
+    /**
+     * Return mapping of report keys to report class names
+     * @return string[]
+     */
     protected function getAvailableReportsClassMap(): array
     {
         return [

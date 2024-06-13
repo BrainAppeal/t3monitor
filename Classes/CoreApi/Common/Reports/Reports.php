@@ -26,6 +26,8 @@
  * ************************************************************* */
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\Status;
+
 /**
  * Timer for duration of function calls
  *
@@ -68,8 +70,18 @@ class Reports
      */
     private function addRecursive($key, $value, &$data): void
     {
-        if(!isset($data[$key]) || !is_array($value)){
-            $data[$key] = $value;
+        if (!isset($data[$key])) {
+            if (is_array($value)) {
+                $data[$key] = [];
+                $sData =& $data[$key];
+                foreach($value as $sKey => $sVal){
+                    $this->addRecursive($sKey, $sVal, $sData);
+                }
+            } else if ($value instanceof \TYPO3\CMS\Core\Type\ContextualFeedbackSeverity) {
+                $data[$key] = Status::getSeverityAsInt($value);
+            } else {
+                $data[$key] = $value;
+            }
         } else {
             $sData =& $data[$key];
             foreach($value as $sKey => $sVal){

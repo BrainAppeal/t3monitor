@@ -26,6 +26,7 @@
  * ************************************************************* */
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\Status;
 use TYPO3\CMS\Core\Localization\LanguageService;
 
 /**
@@ -111,11 +112,7 @@ class Internal extends AbstractReport
 
     protected function createStatusInfoArray(\TYPO3\CMS\Reports\Status $statusInstance): array
     {
-        if ($statusInstance->getSeverity() instanceof \TYPO3\CMS\Core\Type\ContextualFeedbackSeverity) {
-            $severity = $statusInstance->getSeverity()->value;
-        } else {
-            $severity = (int) $statusInstance->getSeverity();
-        }
+        $severity = Status::getSeverityAsInt($statusInstance->getSeverity());
         return [
             'value' => $statusInstance->getValue(),
             'severity' => $severity,
