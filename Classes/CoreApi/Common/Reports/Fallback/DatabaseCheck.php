@@ -34,7 +34,7 @@ class DatabaseCheck extends CoreDatabaseCheck
                     new FlashMessage(
                         '',
                         $exception->getMessage(),
-                        FlashMessage::INFO
+                        Status::INFO
                     )
                 );
             }
@@ -50,7 +50,7 @@ class DatabaseCheck extends CoreDatabaseCheck
                     new FlashMessage(
                         '',
                         $exception->getMessage(),
-                        FlashMessage::INFO
+                        Status::INFO
                     )
                 );
             }

@@ -26,7 +26,6 @@
  * ************************************************************* */
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
-use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Package\PackageManager;
 
 

@@ -27,7 +27,6 @@ use TYPO3\CMS\Core\Site\Entity\SiteInterface;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\VersionNumberUtility;
-use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 
 abstract class AbstractCoreApi implements CoreApiInterface {
 
@@ -52,14 +51,9 @@ abstract class AbstractCoreApi implements CoreApiInterface {
      * @param string $versionNumber Version number on format x.x.x
      * @return int Integer version of version number (where each part can count to 999)
      */
-    public function convertVersionNumberToInteger($versionNumber)
+    public function convertVersionNumberToInteger(string $versionNumber): int
     {
         return VersionNumberUtility::convertVersionNumberToInteger($versionNumber);
-    }
-
-    public function verifyFilenameAgainstDenyPattern($filename)
-    {
-        return GeneralUtility::makeInstance(\TYPO3\CMS\Core\Resource\Security\FileNameValidator::class)->isValid((string)$filename);
     }
 
     /**
@@ -102,24 +96,20 @@ abstract class AbstractCoreApi implements CoreApiInterface {
      * => Use :php:`Environment::getPublicPath() . '/'` instead
      * @return string
      */
-    public function getPublicPath()
+    public function getPublicPath(): string
     {
         return Environment::getPublicPath() . '/';
     }
 
     /**
-     * TYPO3_version is deprecated in TYPO3 v10
-     * => Use \TYPO3\CMS\Core\Information\Typo3Version instead
-     * @param bool $returnIntFromVer Convert version number to integer
-     * @return string|int
+     * @return string
      */
-    public function getTypo3Version($returnIntFromVer = false)
+    public function getTypo3Version(): string
     {
         $cmsVersion = GeneralUtility::makeInstance(Typo3Version::class);
-        return $returnIntFromVer ? self::convertVersionNumberToInteger($cmsVersion->getVersion()) : $cmsVersion->getVersion();
+        /** @var Typo3Version $cmsVersion */
+        return $cmsVersion->getVersion();
     }
-
-    abstract public function getTsfe(): ?TypoScriptFrontendController;
 
     /**
      * Return mapping of report keys to report class names

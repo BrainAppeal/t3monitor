@@ -18,7 +18,7 @@ $EM_CONF['t3monitor'] = [
 	'author_email' => 'feedback@t3monitor.de',
 	'author_company' => 'Brain Appeal GmbH',
 	'shy' => '',
-	'version' => '2.0.6',
+	'version' => '2.1.0',
 	'priority' => '',
 	'module' => '',
 	'state' => 'stable',
@@ -30,7 +30,7 @@ $EM_CONF['t3monitor'] = [
 	'lockType' => '',
 	'constraints' => [
 		'depends' => [
-			'typo3' => '10.4.30-12.4.99',
+			'typo3' => '10.4.30-13.4.99',
         ],
 		'conflicts' => [
         ],

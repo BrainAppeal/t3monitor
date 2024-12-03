@@ -99,10 +99,16 @@ class Encryption
     private function encryptOpenSsl($key, $string)
     {
         $key = hash('sha256', substr($key, 0, 16));
-        $iv = substr(hash('sha256', substr($key, 16)), 0, 16);
+        $cipher = "aes-128-cbc";
+        $ivlen = openssl_cipher_iv_length($cipher);
+        if (!$ivlen) {
+            $ivlen = 16;
+        }
+        //$iv = openssl_random_pseudo_bytes($ivlen, $cstrong);
+        $iv = substr(hash('sha256', substr($key, $ivlen)), 0, $ivlen);
+        /** @noinspection EncryptionInitializationVectorRandomnessInspection */
         $ciphertext = openssl_encrypt($string, 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv);
-        $output = base64_encode($ciphertext);
-        return $output;
+        return base64_encode($ciphertext);
     }
 
     /**
@@ -115,8 +121,13 @@ class Encryption
     private function decryptOpenSsl($key, $encStr)
     {
         $key = hash('sha256', substr($key, 0, 16));
-        $iv = substr(hash('sha256', substr($key, 16)), 0, 16);
-        $output = openssl_decrypt(base64_decode($encStr), 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv);
+        $cipher = "aes-128-cbc";
+        $ivlen = openssl_cipher_iv_length($cipher);
+        if (!$ivlen) {
+            $ivlen = 16;
+        }
+        $iv = substr(hash('sha256', substr($key, $ivlen)), 0, $ivlen);
+        $output = openssl_decrypt(base64_decode($encStr), 'aes-128-cbc', $key, OPENSSL_RAW_DATA, $iv);
         return $output;
     }
 

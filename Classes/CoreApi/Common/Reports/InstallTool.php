@@ -26,6 +26,7 @@
  * ************************************************************* */
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+use TYPO3\CMS\Install\Attribute\UpgradeWizard;
 use TYPO3\CMS\Install\Updates\ConfirmableInterface;
 use TYPO3\CMS\Install\Updates\DatabaseRowsUpdateWizard;
 use TYPO3\CMS\Install\Updates\UpgradeWizardInterface;
@@ -122,7 +123,7 @@ class InstallTool extends AbstractReport
         if (!class_exists(\TYPO3\CMS\Install\Service\UpgradeWizardsService::class)) {
             return [];
         }
-        $wizardRegistry = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['ext/install']['update'];
+        $wizardRegistry = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['ext/install']['update'] ?? [];
         $upgradeWizardsService = $this->coreApi->makeInstance(\TYPO3\CMS\Install\Service\UpgradeWizardsService::class);
         $upgradeWizardStates = [];
         foreach ($wizardRegistry as $identifier => $className) {
@@ -138,12 +139,24 @@ class InstallTool extends AbstractReport
             }
             /** @var UpgradeWizardInterface $updateObject */
             // Prevent exception for Update wizards, that use the deprecated \TYPO3\CMS\Install\Updates\AbstractUpdate
-            if (interface_exists(TYPO3\CMS\Install\Updates\ChattyInterface::class)
-                && is_a($updateObject, TYPO3\CMS\Install\Updates\ChattyInterface::class, true)) {
+            if (interface_exists(\TYPO3\CMS\Install\Updates\ChattyInterface::class)
+                && is_a($updateObject, \TYPO3\CMS\Install\Updates\ChattyInterface::class, true)) {
                 $output = new \Symfony\Component\Console\Output\NullOutput();
                 $updateObject->setOutput($output);
             }
-            $shortIdentifier = $updateObject->getIdentifier();
+            $shortIdentifier = str_replace(['\\'], '', get_class($updateObject));
+            if (method_exists($updateObject, 'getIdentifier')) {
+                $shortIdentifier = $updateObject->getIdentifier();
+            } elseif (class_exists(UpgradeWizard::class)) {
+                $reflectionClass = new \ReflectionClass(get_class($updateObject));
+                $attributes = $reflectionClass->getAttributes(UpgradeWizard::class);
+                if ($attributes) {
+                    $attr = reset($attributes);
+                    $attrObject = $attr->newInstance();
+                    /** @var UpgradeWizard $attrObject */
+                    $shortIdentifier = $attrObject->identifier;
+                }
+            }
             $upgradeWizardStates[$shortIdentifier] = [
                 //'wizard' => $updateObject,
                 'className' => $className,

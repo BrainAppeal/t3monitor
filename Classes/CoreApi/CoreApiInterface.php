@@ -11,7 +11,6 @@
  * @link      https://www.t3monitor.de/
  */
 
-
 namespace BrainAppeal\T3monitor\CoreApi;
 
 use BrainAppeal\T3monitor\CoreApi\Common\Database\DatabaseInterface;
@@ -20,8 +19,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Site\Entity\SiteInterface;
 
-interface CoreApiInterface {
-
+interface CoreApiInterface
+{
     /**
      * Creates an instance of a class taking into account the class-extensions
      * Wrapper function for \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance
@@ -55,4 +54,6 @@ interface CoreApiInterface {
     public function getRootPageId(): ?int;
     public function getLanguageService(): LanguageService;
     public function getSite(): SiteInterface;
+
+    public function getTypo3Version(): string;
 }

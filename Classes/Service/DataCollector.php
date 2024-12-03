@@ -179,10 +179,10 @@ class DataCollector
         if (strlen($encryptionKey) !== 64) {
             $msg = 'ERROR: The encryption key is not configured or has the wrong format';
             $isValid = false;
-        } elseif (empty($key)){
+        } elseif (empty($key) || strlen($key) < 16){
             $msg = 'ERROR: The secret key in the request is missing';
             $isValid = false;
-        } elseif (strpos($encryptionKey, $key) !== 0){
+        } elseif (strlen($key) <= 32 && strpos($encryptionKey, $key) !== 0){
             $msg = 'ERROR: The secret key in the request is wrong';
             $isValid = false;
         }

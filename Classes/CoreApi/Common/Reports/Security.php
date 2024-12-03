@@ -29,15 +29,15 @@ namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
 
 use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\InstallStatusReport;
 use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\SecurityStatusReport;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\Status;
 use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Resource\Security\FileNameValidator;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Report class for security. Creates status reports similar to "reports" system extension
  *
  * @category TYPO3
- * @package T3Monitor
- * @subpackage Reports
  *
  * @see tx_reports_reports_Status
  */
@@ -75,16 +75,16 @@ class Security extends AbstractReport
     protected function addAdditionalReports(&$reportsInfo): void
     {
         // Find id of start page (root page of current site)
-        $pageId = (int) $this->coreApi->getRootPageId();
+        $pageId = (int)$this->coreApi->getRootPageId();
         $reportsInfo['typo3']['StartPage'] = [
-            'value' => (int) $this->coreApi->getRootPageId(),
+            'value' => (int)$this->coreApi->getRootPageId(),
             'severity' => empty($pageId) ? self::ERROR : self::OK,
         ];
         if (empty($reportsInfo['typo3']['Typo3Version'])) {
-            $reportsInfo['typo3']['Typo3Version'] = array(
+            $reportsInfo['typo3']['Typo3Version'] = [
                 'value' => $this->coreApi->getTypo3Version(),
                 'severity' => -2,
-            );
+            ];
         }
     }
 
@@ -154,11 +154,11 @@ class Security extends AbstractReport
             try {
                 $statusObj = $statusProviderInstance->getStatus();
                 foreach ($statusObj as $sKey => $sObj) {
-                    /** @var \BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\Status $sObj */
-                    $reportsInfo[$sKey] = array(
+                    /** @var Status $sObj */
+                    $reportsInfo[$sKey] = [
                         'value' => $sObj->getValue(),
                         'severity' => $sObj->getSeverity(),
-                    );
+                    ];
                 }
 
             } catch (\Throwable $e) {
@@ -178,27 +178,6 @@ class Security extends AbstractReport
     }
 
     /**
-     * Gets the bytes value from a measurement string like "100k".
-     *
-     * @param	string		$measurement: The measurement (e.g. "100k")
-     * @return	integer		The bytes value (e.g. 102400)
-     *@see \TYPO3\CMS\Core\Utility\GeneralUtility::getBytesFromSizeMeasurement (not available in TYPO3 <= 4.2)
-     *
-     */
-    private static function getBytesFromSizeMeasurement(string $measurement)
-    {
-        $bytes = (float)$measurement;
-        if (stripos($measurement, 'G')) {
-            $bytes *= 1024 * 1024 * 1024;
-        } elseif (stripos($measurement, 'M')) {
-            $bytes *= 1024 * 1024;
-        } elseif (stripos($measurement, 'K')) {
-            $bytes *= 1024;
-        }
-        return $bytes;
-    }
-
-    /**
      * @see tx_reports_reports_status_SecurityStatus
      *
      * @return array
@@ -214,10 +193,10 @@ class Security extends AbstractReport
             $value = 'Insecure';
             $severity = self::ERROR;
         }
-        $info['encryptionKeyEmpty'] = array(
+        $info['encryptionKeyEmpty'] = [
             'value' => $value,
             'severity' => $severity,
-        );
+        ];
 
         $value = 'OK';
         $severity = self::OK;
@@ -229,8 +208,8 @@ class Security extends AbstractReport
         }
         if (isset($GLOBALS['TYPO3_CONF_VARS']['BE']['fileDenyPattern'])) {
             $fileDenyPattern = $GLOBALS['TYPO3_CONF_VARS']['BE']['fileDenyPattern'];
-            $defaultParts = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('|', $defaultFileDenyPattern, TRUE);
-            $givenParts = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('|', $fileDenyPattern, TRUE);
+            $defaultParts = GeneralUtility::trimExplode('|', $defaultFileDenyPattern, true);
+            $givenParts = GeneralUtility::trimExplode('|', $fileDenyPattern, true);
             $missingParts = array_diff($defaultParts, $givenParts);
             if (!empty($missingParts)) {
                 $value = 'Insecure';
@@ -239,21 +218,21 @@ class Security extends AbstractReport
         } else {
             $fileDenyPattern = $defaultFileDenyPattern;
         }
-        $info['fileDenyPattern'] = array(
+        $info['fileDenyPattern'] = [
             'value' => $value,
             'severity' => $severity,
-        );
+        ];
         $value = 'OK';
         $severity = self::OK;
         if ($fileDenyPattern !== $defaultFileDenyPattern
-            && $this->coreApi->verifyFilenameAgainstDenyPattern('.htaccess')) {
+            && $this->verifyFilenameAgainstDenyPattern('.htaccess')) {
             $value = 'Insecure';
             $severity = self::ERROR;
         }
-        $info['htaccessUpload'] = array(
+        $info['htaccessUpload'] = [
             'value' => $value,
             'severity' => $severity,
-        );
+        ];
         $info['installToolEnabled'] = $this->securityInstallTool();
         $value = 'OK';
         $severity = self::OK;
@@ -261,16 +240,24 @@ class Security extends AbstractReport
             $value = 'Insecure';
             $severity = self::ERROR;
         }
-        $info['installToolPassword'] = array(
+        $info['installToolPassword'] = [
             'value' => $value,
             'severity' => $severity,
-        );
+        ];
         return $info;
     }
+
+    private function verifyFilenameAgainstDenyPattern(string $filename): bool
+    {
+        $fileNameValidator = GeneralUtility::makeInstance(FileNameValidator::class);
+        /** @var FileNameValidator $fileNameValidator */
+        return $fileNameValidator->isValid($filename);
+    }
+
     /**
      * Checks if a backend user "admin" exists with the password "password"
      *
-     * @return array Check result
+     * @return array{value: string, severity: int} Check result
      */
     private function securityAdminAccount(): array
     {
@@ -285,16 +272,16 @@ class Security extends AbstractReport
             $value = 'Insecure';
             $severity = self::ERROR;
         }
-        $checkResult = [
+        return [
             'value' => $value,
             'severity' => $severity,
         ];
-        return $checkResult;
     }
+
     /**
-     * Checks if the install tool is enabled
+     * Checks if the installation tool is enabled
      *
-     * @return array Check result
+     * @return array{value: string, severity: int} Check result
      */
     private function securityInstallTool(): array
     {
@@ -351,10 +338,10 @@ class Security extends AbstractReport
                             }
                             foreach ($statusList as $sKey => $sObj) {
                                 /** @var \TYPO3\CMS\Reports\Status $sObj */
-                                $reportsInfo[$group][$sKey] = array(
+                                $reportsInfo[$group][$sKey] = [
                                     'value' => $sObj->getValue(),
-                                    'severity' => (int)$sObj->getSeverity(),
-                                );
+                                    'severity' => Status::getSeverityAsInt($sObj->getSeverity()),
+                                ];
                             }
                         }
                     } catch (\TYPO3\CMS\Core\Routing\RouteNotFoundException $e) {

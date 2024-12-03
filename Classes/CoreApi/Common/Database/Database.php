@@ -117,7 +117,7 @@ class Database implements DatabaseInterface, SingletonInterface
         try {
             $queryBuilder->select('*')
                 ->from('information_schema.TABLES');
-            $tables = $queryBuilder->execute()->fetchAll();
+            $tables = $this->executeFetchAll($queryBuilder);
         } catch (\Throwable $e) {
             $tables = [];
         }
@@ -151,6 +151,22 @@ class Database implements DatabaseInterface, SingletonInterface
         return $this->tableInfo;
     }
 
+    protected function executeFetchAll(\TYPO3\CMS\Core\Database\Query\QueryBuilder $queryBuilder)
+    {
+        if (!method_exists($queryBuilder, 'executeQuery')) {
+            return $queryBuilder->execute()->fetchAll();
+        }
+        return $queryBuilder->executeQuery()->fetchAllAssociative();
+    }
+
+    protected function executeFetchRow(\TYPO3\CMS\Core\Database\Query\QueryBuilder $queryBuilder)
+    {
+        if (!method_exists($queryBuilder, 'executeQuery')) {
+            return $queryBuilder->execute()->fetch();
+        }
+        return $queryBuilder->executeQuery()->fetchAssociative();
+    }
+
     /**
      * Load record from database
      *
@@ -163,17 +179,18 @@ class Database implements DatabaseInterface, SingletonInterface
      */
     public function fetchRow($select, $from, $where, $orderBy = '')
     {
-        /** @var \TYPO3\CMS\Core\Database\Query\QueryBuilder $queryBuilder */
-        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($from);
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
+        $queryBuilder = $connectionPool->getQueryBuilderForTable($from);
         $queryBuilder->resetRestrictions();
-        $select = explode(', ', $select);
-        $statement = $queryBuilder;
-//          ->select(...$select) // Cant use this because we need to ensure that the extension also works with < PHP5.6
-        call_user_func_array(array($statement,'select'), $select);
-        $queryResult = $statement->from($from)
-            ->where($where)
-            ->execute();
-        return $queryResult->fetch();
+        $selectList = explode(', ', $select);
+        //$statement = $queryBuilder;
+//          ->select(...$selectList) // Cant use this because we need to ensure that the extension also works with < PHP5.6
+        call_user_func_array([$queryBuilder,'select'], $selectList);
+        $queryBuilder->from($from)
+            ->where($where);
+
+        return $this->executeFetchRow($queryBuilder);
     }
 
     /**
@@ -189,21 +206,22 @@ class Database implements DatabaseInterface, SingletonInterface
      */
     public function fetchList($select, $from, $where, array $orderBy = [], $limit = '')
     {
-        /** @var \TYPO3\CMS\Core\Database\Query\QueryBuilder $queryBuilder */
-        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($from);
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
+        $queryBuilder = $connectionPool->getQueryBuilderForTable($from);
         $queryBuilder->resetRestrictions();
         $selectFields = explode(', ', $select);
-        $statement = $queryBuilder
-            ->select(...$selectFields);
-        $statement->from($from)
+        $queryBuilder
+            ->select(...$selectFields)
+            ->from($from)
             ->where($where);
         foreach ($orderBy as $field => $order) {
-            $statement->addOrderBy($field, $order);
+            $queryBuilder->addOrderBy($field, $order);
         }
         if ($limit !== '') {
-            $statement->setMaxResults($limit);
+            $queryBuilder->setMaxResults($limit);
         }
-        return $statement->execute()->fetchAll();
+        return $this->executeFetchAll($queryBuilder);
     }
 
     /**

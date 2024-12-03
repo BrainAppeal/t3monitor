@@ -82,11 +82,13 @@ class Reports
             } else {
                 $data[$key] = $value;
             }
-        } else {
+        } elseif (is_iterable($value)) {
             $sData =& $data[$key];
             foreach($value as $sKey => $sVal){
                 $this->addRecursive($sKey, $sVal, $sData);
             }
+        } else {
+            $data[$key] = $value;
         }
     }
     /**

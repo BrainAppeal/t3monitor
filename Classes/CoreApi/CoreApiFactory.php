@@ -23,7 +23,7 @@ class CoreApiFactory implements SingletonInterface {
      */
     protected static function getInstalledMajorVersion(): int
     {
-        return (string)GeneralUtility::makeInstance(Typo3Version::class)->getMajorVersion();
+        return (int)GeneralUtility::makeInstance(Typo3Version::class)->getMajorVersion();
     }
 
     /**
@@ -35,13 +35,16 @@ class CoreApiFactory implements SingletonInterface {
             $majorVersion = self::getInstalledMajorVersion();
             switch ($majorVersion) {
                 case 10:
-                    $this->instance = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\TYPO3Version10\CoreApi::class);
+                    $this->instance = GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\TYPO3Version10\CoreApi::class);
                     break;
                 case 11:
-                    $this->instance = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\TYPO3Version11\CoreApi::class);
+                    $this->instance = GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\TYPO3Version11\CoreApi::class);
                     break;
                 case 12:
-                    $this->instance = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\TYPO3Version12\CoreApi::class);
+                    $this->instance = GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\TYPO3Version12\CoreApi::class);
+                    break;
+                case 13:
+                    $this->instance = GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\TYPO3Version13\CoreApi::class);
                     break;
 
             }

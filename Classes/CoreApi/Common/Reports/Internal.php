@@ -27,7 +27,6 @@
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
 use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\Status;
-use TYPO3\CMS\Core\Localization\LanguageService;
 
 /**
  * Report class for server.

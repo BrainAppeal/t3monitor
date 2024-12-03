@@ -25,6 +25,7 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+use BrainAppeal\T3monitor\CoreApi\AbstractCoreApi;
 use BrainAppeal\T3monitor\CoreApi\CoreApiInterface;
 use BrainAppeal\T3monitor\Helper\Config;
 

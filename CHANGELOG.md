@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 2.1.0 (2024-12-03)
+
+- [FEATURE] add TYPO3 13.4 LTS compatibility
+
 ## 2.0.6 (2024-06-13)
 
 - [BUGFIX] fix usage of service registry if EXT:reports is not installed
