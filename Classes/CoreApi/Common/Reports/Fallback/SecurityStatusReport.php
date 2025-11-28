@@ -15,7 +15,6 @@
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback;
 
-use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Install\Service\EnableFileService;
@@ -30,13 +29,10 @@ final class SecurityStatusReport implements StatusProviderInterface
     /**
      * Compiles a collection of system status checks as a status report.
      *
-     * @return Status[]
+     * @return array<Status|\TYPO3\CMS\Reports\Status>
      */
-    public function getStatus(ServerRequestInterface $request = null): array
+    public function getStatus(): array
     {
-        if ($request !== null) {
-            $this->removeInstallToolEnableFilesIfRequested($request);
-        }
         return [
             'installToolProtection' => $this->getInstallToolProtectionStatus(),
             'serverResponseStatus' => GeneralUtility::makeInstance(ServerResponseCheck::class)->asStatus(),
@@ -97,18 +93,6 @@ final class SecurityStatusReport implements StatusProviderInterface
             $message,
             $severity
         );
-    }
-
-    private function removeInstallToolEnableFilesIfRequested(ServerRequestInterface $request): void
-    {
-        // @todo: This should of course be a POST-only call! No idea how, but it should be.
-        //        Also, the EnableFileService is pretty ugly nowadays, since it can handle
-        //        multiple file locations, but does not reflect this in its methods properly.
-        //        Thankfully, EnableFileService is @internal, so all this could be cleaned up
-        //        without being breaking ...
-        if (($request->getQueryParams()['adminCmd'] ?? '') === 'remove_ENABLE_INSTALL_TOOL') {
-            EnableFileService::removeInstallToolEnableFile();
-        }
     }
 
     private function getLanguageService(): ?LanguageService

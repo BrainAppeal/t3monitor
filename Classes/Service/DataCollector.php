@@ -55,7 +55,7 @@ class DataCollector
     private $config;
 
     /** @internal This connection can be only instantiated by its driver. */
-    public function __construct(LoggerInterface $logger = null)
+    public function __construct(?LoggerInterface $logger = null)
     {
         $this->logger = $logger;
         $this->config = GeneralUtility::makeInstance(Config::class);

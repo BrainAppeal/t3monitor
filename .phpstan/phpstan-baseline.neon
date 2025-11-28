@@ -1,2 +1,6 @@
 parameters:
 	ignoreErrors:
+		-
+			message: "#^Call to an undefined method TYPO3\\\\CMS\\\\Core\\\\Database\\\\Query\\\\QueryBuilder\\:\\:execute\\(\\)\\.$#"
+			count: 2
+			path: ../Classes/CoreApi/Common/Database/Database.php

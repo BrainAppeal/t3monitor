@@ -338,8 +338,12 @@ class Security extends AbstractReport
                             }
                             foreach ($statusList as $sKey => $sObj) {
                                 /** @var \TYPO3\CMS\Reports\Status $sObj */
+                                $value = $sObj->getValue();
+                                if ($value && is_scalar($value) && strlen($value) > 5000) {
+                                    $value = substr($value, 0, 5000);
+                                }
                                 $reportsInfo[$group][$sKey] = [
-                                    'value' => $sObj->getValue(),
+                                    'value' => $value,
                                     'severity' => Status::getSeverityAsInt($sObj->getSeverity()),
                                 ];
                             }

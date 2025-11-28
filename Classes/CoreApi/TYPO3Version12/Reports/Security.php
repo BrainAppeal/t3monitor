@@ -68,8 +68,12 @@ class Security extends \BrainAppeal\T3monitor\CoreApi\Common\Reports\Security
                     }
                     foreach ($statusList as $sKey => $sObj) {
                         /** @var \TYPO3\CMS\Reports\Status $sObj */
+                        $value = $sObj->getValue();
+                        if ($value && is_scalar($value) && strlen($value) > 5000) {
+                            $value = substr($value, 0, 5000);
+                        }
                         $reportsInfo[$statusProviderInstance->getLabel()][$sKey] = [
-                            'value' => $sObj->getValue(),
+                            'value' => $value,
                             'severity' => $sObj->getSeverity()->value,
                             'message' => $sObj->getMessage(),
                         ];
