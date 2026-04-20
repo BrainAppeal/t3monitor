@@ -58,10 +58,10 @@ class Check extends CoreInstallCheck
             ];
         }
 
-        $statusList['Webserver'] = array(
+        $statusList['Webserver'] = [
             'value' => $_SERVER['SERVER_SOFTWARE'],
             'severity' => Status::OK,
-        );
+        ];
         return $statusList;
     }
 

@@ -42,7 +42,7 @@ class Disc extends AbstractReport
      *
      * @param Reports $reportHandler
      */
-    public function addReports(Reports $reportHandler)
+    public function addReports(Reports $reportHandler): void
     {
         $info = [];
         $basePath = Environment::getPublicPath() . '/';

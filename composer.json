@@ -1,7 +1,7 @@
 {
     "name": "brainappeal/t3monitor",
     "type": "typo3-cms-extension",
-    "description": "Monitors TYPO3 installation for updates and security issues (Requires an account on https://www.t3monitor.de)",
+    "description": "T3Monitor - Monitors TYPO3 installation for updates and security issues (Requires an account on https://www.t3monitor.de)",
     "keywords": [
         "TYPO3",
         "extension",
@@ -18,7 +18,7 @@
         "GPL-2.0-or-later"
     ],
     "require": {
-        "typo3/cms-core": ">=10.4.30,<=13.4.99"
+        "typo3/cms-core": ">=10.4.30,<=14.3.99"
     },
     "autoload": {
         "psr-4": {
@@ -27,7 +27,8 @@
     },
     "extra": {
         "typo3/cms": {
-            "extension-key": "t3monitor"
+            "extension-key": "t3monitor",
+            "version": "2.2.0"
         }
     }
 }

@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /* * *************************************************************
  *  Copyright notice
  *
@@ -24,10 +27,9 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
-
 namespace BrainAppeal\T3monitor\Helper;
 /**
- * Timer for duration of function calls
+ * Timer for the duration of function calls
  *
  * @category TYPO3
  * @package T3Monitor
@@ -40,14 +42,13 @@ class Timer
      *
      * @var array
      */
-    private $timeData;
+    private $timeData = [];
 
     /**
      * Default constructor
      */
     public function __construct()
     {
-        $this->timeData = [];
     }
 
     /**

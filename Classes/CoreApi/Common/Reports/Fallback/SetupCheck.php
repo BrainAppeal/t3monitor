@@ -15,7 +15,7 @@ class SetupCheck extends CoreSetupCheck
     public function getStatusList(): array
     {
         $this->messageQueue = new FlashMessageQueue('install');
-        $statusList = array();
+        $statusList = [];
         $class = new \ReflectionClass($this);
         $methods = $class->getMethods();
         foreach ($methods as $method) {

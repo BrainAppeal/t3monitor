@@ -68,22 +68,20 @@ final class SecurityStatusReport implements StatusProviderInterface
                 );
                 $message .= ' <a href="' . htmlspecialchars($disableInstallToolUrl) . '">' .
                     $this->getLanguageService()->sL('LLL:EXT:core/Resources/Private/Language/locallang_core.xlf:warning.install_enabled_cmd') . '</a>';
+            } elseif (EnableFileService::installToolEnableFileLifetimeExpired()) {
+                EnableFileService::removeInstallToolEnableFile();
             } else {
-                if (EnableFileService::installToolEnableFileLifetimeExpired()) {
-                    EnableFileService::removeInstallToolEnableFile();
-                } else {
-                    $severity = Status::NOTICE;
-                    // @todo: See todo on removeInstallToolEnableFilesIfRequested() when this GU::getIndpEnv() is about to be removed.
-                    $disableInstallToolUrl = GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL') . '&adminCmd=remove_ENABLE_INSTALL_TOOL';
-                    $value = $this->getLanguageService()->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_enabledTemporarily');
-                    $message = sprintf(
-                        $this->getLanguageService()->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_installEnabledTemporarily'),
-                        '<code style="white-space: nowrap;">' . $enableInstallToolFile . '</code>',
-                        floor((@filemtime($enableInstallToolFile) + EnableFileService::INSTALL_TOOL_ENABLE_FILE_LIFETIME - time()) / 60)
-                    );
-                    $message .= ' <a href="' . htmlspecialchars($disableInstallToolUrl) . '">' .
-                        $this->getLanguageService()->sL('LLL:EXT:core/Resources/Private/Language/locallang_core.xlf:warning.install_enabled_cmd') . '</a>';
-                }
+                $severity = Status::NOTICE;
+                // @todo: See todo on removeInstallToolEnableFilesIfRequested() when this GU::getIndpEnv() is about to be removed.
+                $disableInstallToolUrl = GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL') . '&adminCmd=remove_ENABLE_INSTALL_TOOL';
+                $value = $this->getLanguageService()->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_enabledTemporarily');
+                $message = sprintf(
+                    $this->getLanguageService()->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_installEnabledTemporarily'),
+                    '<code style="white-space: nowrap;">' . $enableInstallToolFile . '</code>',
+                    floor((@filemtime($enableInstallToolFile) + EnableFileService::INSTALL_TOOL_ENABLE_FILE_LIFETIME - time()) / 60)
+                );
+                $message .= ' <a href="' . htmlspecialchars($disableInstallToolUrl) . '">' .
+                    $this->getLanguageService()->sL('LLL:EXT:core/Resources/Private/Language/locallang_core.xlf:warning.install_enabled_cmd') . '</a>';
             }
         }
         return GeneralUtility::makeInstance(

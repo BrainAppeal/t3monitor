@@ -13,7 +13,7 @@ use TYPO3\CMS\Reports\StatusProviderInterface;
  */
 class StatusRegistry
 {
-    private \TYPO3\CMS\Reports\Registry\StatusRegistry $registry;
+    private $registry;
 
     public function __construct()
     {
@@ -23,7 +23,7 @@ class StatusRegistry
      * @param \TYPO3\CMS\Reports\Registry\StatusRegistry $registry
      * @return void
      */
-    public function setRegistry(\TYPO3\CMS\Reports\Registry\StatusRegistry $registry) {
+    public function setRegistry(\TYPO3\CMS\Reports\Registry\StatusRegistry $registry): void {
         $this->registry = $registry;
     }
 
@@ -34,7 +34,7 @@ class StatusRegistry
      */
     public function getProviders(): array
     {
-        if (null === $this->registry) {
+        if (!$this->registry instanceof \TYPO3\CMS\Reports\Registry\StatusRegistry) {
             return [];
         }
         return $this->registry->getProviders();

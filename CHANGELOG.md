@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 2.2.0 (2026-04-20)
+
+- [FEATURE] add TYPO3 14.3 LTS compatibility
+
 ## 2.1.0 (2024-12-03)
 
 - [FEATURE] add TYPO3 13.4 LTS compatibility

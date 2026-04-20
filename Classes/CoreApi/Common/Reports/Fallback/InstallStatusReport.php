@@ -110,7 +110,7 @@ final class InstallStatusReport implements StatusProviderInterface
                     $severity = Status::ERROR;
                 } else {
                     $message .= sprintf($languageService->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_directoryDoesNotExist'), $relPath);
-                    if ($requirementLevel == 0) {
+                    if ($requirementLevel === 0) {
                         $message .= ' ' . $languageService->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_directoryShouldAlsoBeWritable');
                     }
                     $message .= '<br />';
@@ -119,33 +119,50 @@ final class InstallStatusReport implements StatusProviderInterface
                         $severity = Status::WARNING;
                     }
                 }
-            } else {
-                if (!is_writable($path)) {
-                    switch ($requirementLevel) {
-                        case 0:
-                            $message .= sprintf(
-                                $languageService->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_directoryShouldBeWritable'),
-                                $path
-                            ) . '<br />';
-                            if ($severity < Status::WARNING) {
-                                $value = $languageService->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_recommendedWritableDirectory');
-                                $severity = Status::WARNING;
-                            }
-                            break;
-                        case 2:
-                            $value = $languageService->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_requiredWritableDirectory');
-                            $message .= sprintf(
-                                $languageService->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_directoryMustBeWritable'),
-                                $path
-                            ) . '<br />';
-                            $severity = Status::ERROR;
-                            break;
-                        default:
-                    }
+            } elseif (!is_writable($path)) {
+                switch ($requirementLevel) {
+                    case 0:
+                        $message .= sprintf(
+                            $languageService->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_directoryShouldBeWritable'),
+                            $path
+                        ) . '<br />';
+                        if ($severity < Status::WARNING) {
+                            $value = $languageService->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_recommendedWritableDirectory');
+                            $severity = Status::WARNING;
+                        }
+                        break;
+                    case 2:
+                        $value = $languageService->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_requiredWritableDirectory');
+                        $message .= sprintf(
+                            $languageService->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_directoryMustBeWritable'),
+                            $path
+                        ) . '<br />';
+                        $severity = Status::ERROR;
+                        break;
+                    default:
                 }
             }
         }
         return GeneralUtility::makeInstance(Status::class, $languageService->sL('LLL:EXT:install/Resources/Private/Language/Report/locallang.xlf:status_fileSystem'), $value, $message, $severity);
+    }
+
+    /**
+     * Returns the upgrade wizard service
+     * @return \TYPO3\CMS\Core\Service\UpgradeWizardsService|\TYPO3\CMS\Install\Service\UpgradeWizardsService|null
+     */
+    protected function getUpgradeWizardsService(): ?object
+    {
+        $upgradeWizardServiceClass = null;
+        // TYPO3 >= 14
+        if (class_exists(\TYPO3\CMS\Core\Service\UpgradeWizardsService::class)) {
+            $upgradeWizardServiceClass = \TYPO3\CMS\Core\Service\UpgradeWizardsService::class;
+        } elseif (class_exists(\TYPO3\CMS\Install\Service\UpgradeWizardsService::class)) {
+            $upgradeWizardServiceClass = \TYPO3\CMS\Install\Service\UpgradeWizardsService::class;
+        }
+        if (null === $upgradeWizardServiceClass) {
+            return null;
+        }
+        return GeneralUtility::makeInstance($upgradeWizardServiceClass);
     }
 
     /**
@@ -156,16 +173,14 @@ final class InstallStatusReport implements StatusProviderInterface
      */
     protected function getIncompleteWizards(): array
     {
-        if (!class_exists(\TYPO3\CMS\Install\Service\UpgradeWizardsService::class)) {
+        $upgradeWizardsService = $this->getUpgradeWizardsService();
+        if (null === $upgradeWizardsService) {
             return [];
         }
-        $upgradeWizardsService = GeneralUtility::makeInstance(\TYPO3\CMS\Install\Service\UpgradeWizardsService::class);
         $incompleteWizards = $upgradeWizardsService->getUpgradeWizardsList();
         $incompleteWizards = array_filter(
             $incompleteWizards,
-            static function ($wizard) {
-                return $wizard['shouldRenderWizard'];
-            }
+            static fn($wizard) => $wizard['shouldRenderWizard']
         );
         return $incompleteWizards;
     }
@@ -317,9 +332,7 @@ final class InstallStatusReport implements StatusProviderInterface
     private function wrapItems(array $items, string $before, string $after): array
     {
         return array_map(
-            static function (string $item) use ($before, $after): string {
-                return $before . $item . $after;
-            },
+            static fn(string $item): string => $before . $item . $after,
             array_filter($items)
         );
     }

@@ -25,7 +25,6 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
-use BrainAppeal\T3monitor\CoreApi\AbstractCoreApi;
 use BrainAppeal\T3monitor\CoreApi\CoreApiInterface;
 use BrainAppeal\T3monitor\Helper\Config;
 
@@ -41,16 +40,16 @@ use BrainAppeal\T3monitor\Helper\Config;
 abstract class AbstractReport
 {
     //Constants copied from tx_reports_reports_Status
-    const NOTICE = -2;
-    const INFO = -1;
-    const OK = 0;
-    const WARNING = 1;
-    const ERROR = 2;
+    public const NOTICE = -2;
+    public const INFO = -1;
+    public const OK = 0;
+    public const WARNING = 1;
+    public const ERROR = 2;
 
     /**
      * Configuration object
      *
-     * @var \BrainAppeal\T3monitor\Helper\Config
+     * @var Config
      */
     private $config;
 
@@ -78,7 +77,7 @@ abstract class AbstractReport
     /**
      * Adds the reports of this class to the report handler
      *
-     * @param \BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler
+     * @param Reports $reportHandler
      */
-    public abstract function addReports(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler);
+    abstract public function addReports(Reports $reportHandler);
 }

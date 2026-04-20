@@ -43,9 +43,9 @@ class SysLog extends AbstractReport
     /**
      * Returns information about the database tables
      *
-     * @param \BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler
+     * @param Reports $reportHandler
      */
-    public function addReports(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler)
+    public function addReports(Reports $reportHandler): void
     {
         $this->addSysLogReports($reportHandler);
         $this->addLogFileReports($reportHandler);
@@ -54,9 +54,9 @@ class SysLog extends AbstractReport
     /**
      * Returns logging information from the log files
      *
-     * @param \BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler
+     * @param Reports $reportHandler
      */
-    private function addLogFileReports(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler)
+    private function addLogFileReports(Reports $reportHandler): void
     {
         /** @var LogManager $logManager */
         $logManager = $this->coreApi->makeInstance(LogManager::class);
@@ -80,11 +80,11 @@ class SysLog extends AbstractReport
      * @param string $basePath
      * @return array
      */
-    function getGroupedDirectorySize(string $basePath): array
+    protected function getGroupedDirectorySize(string $basePath): array
     {
         $bytesTotal = [];
         $path = realpath($basePath);
-        if(!empty($path) && file_exists($path)){
+        if(!in_array($path, ['', false], true) && file_exists($path)){
             foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)) as $object){
                 /** @var \SplFileInfo $object */
                 $paths = explode(DIRECTORY_SEPARATOR, trim(str_replace($basePath, '', $object->getPath()), DIRECTORY_SEPARATOR));
@@ -112,7 +112,7 @@ class SysLog extends AbstractReport
             if (file_exists($absFilePath) && filesize($absFilePath) > 0) {
                 $commandOutput = $this->tailCustom($absFilePath, $lineCount);
                 if (!empty($commandOutput)) {
-                    $lines = explode("\n", $commandOutput);
+                    $lines = explode("\n", (string) $commandOutput);
                     return array_filter($lines);
                 }
             }
@@ -135,19 +135,28 @@ class SysLog extends AbstractReport
 
         // Open file
         $f = @fopen($filepath, "rb");
-        if ($f === false) return false;
+        if ($f === false) {
+            return false;
+        }
 
         // Sets buffer size, according to the number of lines to retrieve.
         // This gives a performance boost when reading a few lines from the file.
-        if (!$adaptive) $buffer = 4096;
-        else $buffer = ($lines < 2 ? 64 : ($lines < 10 ? 512 : 4096));
+        if (!$adaptive) {
+            $buffer = 4096;
+        } elseif ($lines < 2) {
+            $buffer = 64;
+        } else {
+            $buffer = $lines < 10 ? 512 : 4096;
+        }
 
         // Jump to last character
         fseek($f, -1, SEEK_END);
 
         // Read it and adjust line number if necessary
         // (Otherwise the result would be wrong if file doesn't end with a blank line)
-        if (fread($f, 1) !== "\n") $lines -= 1;
+        if (fread($f, 1) !== "\n") {
+            --$lines;
+        }
 
         // Start reading
         $output = '';
@@ -191,11 +200,11 @@ class SysLog extends AbstractReport
     /**
      * Returns logging information from the sys_log table
      *
-     * @param \BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler
+     * @param Reports $reportHandler
      */
-    private function addSysLogReports(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler)
+    private function addSysLogReports(Reports $reportHandler): void
     {
-        $info = array();
+        $info = [];
         $db = $this->coreApi->getDatabase();
         $config = $this->getConfig();
         $minTstamp = (int) $config->getMinTstamp();

@@ -15,6 +15,7 @@
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback;
 
+use TYPO3\CMS\Core\Type\ContextualFeedbackSeverity;
 
 /**
  * A class representing a certain status
@@ -72,7 +73,7 @@ class Status
      * @param string $value Status value, eg. "Disabled"
      * @param string $message Optional message further describing the title/value combination
      *        Example:, eg "The deprecation log is important and does foo, to disable it do bar"
-     * @param int|\TYPO3\CMS\Core\Type\ContextualFeedbackSeverity $severity A severity level. Use one of the constants above!
+     * @param int|ContextualFeedbackSeverity $severity A severity level. Use one of the constants above!
      *
      * @todo: Change $severity to allow self only in v13
      */
@@ -121,7 +122,7 @@ class Status
 
     public static function getSeverityAsInt($severity): int
     {
-        if ($severity instanceof \TYPO3\CMS\Core\Type\ContextualFeedbackSeverity) {
+        if ($severity instanceof ContextualFeedbackSeverity) {
             return $severity->value;
         }
         return (int) $severity;
@@ -132,7 +133,7 @@ class Status
      *
      * @return string String representation of this status.
      */
-    public function __toString()
+    public function __toString(): string
     {
         // Max length 80 characters
         $stringRepresentation = str_pad('[' . $this->severity . ']', 7) . str_pad($this->title, 40) . ' - ' . substr($this->value, 0, 30);

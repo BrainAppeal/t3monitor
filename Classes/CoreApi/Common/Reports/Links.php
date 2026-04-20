@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /* * *************************************************************
  *  Copyright notice
  *
@@ -24,7 +27,6 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  * ************************************************************* */
-
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
 /**
  * Report class for links.
@@ -40,9 +42,9 @@ class Links extends AbstractReport
      *
      * @param Reports $reportHandler
      */
-    public function addReports(Reports $reportHandler)
+    public function addReports(Reports $reportHandler): void
     {
-        $info = array();
+        $info = [];
         $table = 'tx_linkvalidator_link';
         $db = $this->coreApi->getDatabase();
         $tables = $db->getTablesInfo();

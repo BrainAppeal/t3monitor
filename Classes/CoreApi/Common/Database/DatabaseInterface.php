@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace BrainAppeal\T3monitor\CoreApi\Common\Database;
 interface DatabaseInterface
 {

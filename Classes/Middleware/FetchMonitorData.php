@@ -11,7 +11,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Process t3monitor data if set
+ * Process T3monitor data if set
  */
 class FetchMonitorData implements MiddlewareInterface
 {
@@ -24,7 +24,9 @@ class FetchMonitorData implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $queryParams = $request->getQueryParams();
-        if (!empty($queryParams) && isset($queryParams['t3monitor'])) {
+        if ($request->getUri()->getPath() === '/t3monitor' || ($queryParams !== [] && isset($queryParams['t3monitor']))) {
+            // Remove any output produced until now
+            ob_clean();
             /** @var DataCollector $dataCollector */
             $dataCollector = GeneralUtility::makeInstance(DataCollector::class);
             return $dataCollector->processRequest($request);

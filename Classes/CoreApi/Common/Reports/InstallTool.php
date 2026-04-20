@@ -26,10 +26,15 @@
  * ************************************************************* */
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
-use TYPO3\CMS\Install\Attribute\UpgradeWizard;
+use Symfony\Component\Console\Output\NullOutput;
+use TYPO3\CMS\Core\Database\Schema\SchemaMigrator;
+use TYPO3\CMS\Core\Database\Schema\SqlReader;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Object\ObjectManager;
+use TYPO3\CMS\Install\Updates\ChattyInterface;
 use TYPO3\CMS\Install\Updates\ConfirmableInterface;
-use TYPO3\CMS\Install\Updates\DatabaseRowsUpdateWizard;
 use TYPO3\CMS\Install\Updates\UpgradeWizardInterface;
+use TYPO3\CMS\Install\Updates\UpgradeWizardRegistry;
 
 /**
  * Reports for install tool.
@@ -45,7 +50,7 @@ class InstallTool extends AbstractReport
      *
      * @param Reports $reportHandler
      */
-    public function addReports(Reports $reportHandler)
+    public function addReports(Reports $reportHandler): void
     {
         $info = [
             'database' => $this->getDatabaseSchemaUpdates(),
@@ -59,13 +64,13 @@ class InstallTool extends AbstractReport
      */
     protected function getDatabaseSchemaUpdates()
     {
-        if (!class_exists(\TYPO3\CMS\Core\Database\Schema\SchemaMigrator::class)) {
+        if (!class_exists(SchemaMigrator::class)) {
             return [];
         }
-        /** @var \TYPO3\CMS\Core\Database\Schema\SqlReader $sqlReader */
-        $sqlReader = $this->coreApi->makeInstance(\TYPO3\CMS\Core\Database\Schema\SqlReader::class);
-        /** @var \TYPO3\CMS\Core\Database\Schema\SchemaMigrator $schemaMigrator */
-        $schemaMigrator = $this->coreApi->makeInstance(\TYPO3\CMS\Core\Database\Schema\SchemaMigrator::class);
+        /** @var SqlReader $sqlReader */
+        $sqlReader = $this->coreApi->makeInstance(SqlReader::class);
+        /** @var SchemaMigrator $schemaMigrator */
+        $schemaMigrator = $this->coreApi->makeInstance(SchemaMigrator::class);
         $sqlStatements = $sqlReader->getCreateTableStatementArray($sqlReader->getTablesDefinitionString());
         $schemaUpdates = [];
         try {
@@ -102,7 +107,7 @@ class InstallTool extends AbstractReport
                 if (is_array($data[$key])) {
                     $data[$key] = $this->fixArrayXmlKeyNames($data[$key]);
                 }
-                if (preg_match('/^(\d+).*/', $key, $matches)) {
+                if (preg_match('/^(\d+).*/', (string) $key, $matches)) {
                     $newKey = 'a' . $key;
                     if (strlen($newKey) > 20) {
                         $newKey = substr($newKey, 0, 20);
@@ -116,63 +121,103 @@ class InstallTool extends AbstractReport
     }
 
     /**
+     * Returns the upgrade wizard service
+     * @return \TYPO3\CMS\Core\Service\UpgradeWizardsService|\TYPO3\CMS\Install\Service\UpgradeWizardsService|null
+     */
+    protected function getUpgradeWizardsService(): ?object
+    {
+        $upgradeWizardServiceClass = null;
+        // TYPO3 >= 14
+        if (class_exists(\TYPO3\CMS\Core\Service\UpgradeWizardsService::class)) {
+            $upgradeWizardServiceClass = \TYPO3\CMS\Core\Service\UpgradeWizardsService::class;
+        } elseif (class_exists(\TYPO3\CMS\Install\Service\UpgradeWizardsService::class)) {
+            $upgradeWizardServiceClass = \TYPO3\CMS\Install\Service\UpgradeWizardsService::class;
+        }
+        if (null === $upgradeWizardServiceClass) {
+            return null;
+        }
+        return $this->coreApi->makeInstance($upgradeWizardServiceClass);
+    }
+
+    /**
      * Returns information about the update wizard states
      */
-    protected function getUpdateWizardStates()
+    protected function getUpdateWizardStates(): ?array
     {
-        if (!class_exists(\TYPO3\CMS\Install\Service\UpgradeWizardsService::class)) {
+        $upgradeWizardsService = $this->getUpgradeWizardsService();
+        if (null === $upgradeWizardsService) {
             return [];
         }
-        $wizardRegistry = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['ext/install']['update'] ?? [];
-        $upgradeWizardsService = $this->coreApi->makeInstance(\TYPO3\CMS\Install\Service\UpgradeWizardsService::class);
-        $upgradeWizardStates = [];
-        foreach ($wizardRegistry as $identifier => $className) {
-            if (empty($className) || !class_exists($className)) {
-                continue;
+        if (method_exists($upgradeWizardsService, 'getUpgradeWizardIdentifiers')) {
+            $wizardRegistry = [];
+            foreach ($upgradeWizardsService->getUpgradeWizardIdentifiers() as $identifier) {
+                $upgradeWizardObject = $upgradeWizardsService->getUpgradeWizard($identifier);
+                if ($upgradeWizardObject) {
+                    $wizardRegistry[$identifier] = $upgradeWizardsService->getUpgradeWizard($identifier);
+                }
             }
-            if (class_exists(\TYPO3\CMS\Extbase\Object\ObjectManager::class)) {
-                /* @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
-                $objectManager = $this->coreApi->makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class);
-                $updateObject = $objectManager->get($className);
+        } else {
+            $wizardRegistry = $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['ext/install']['update'] ?? [];
+        }
+        $upgradeWizardStates = [];
+        foreach ($wizardRegistry as $identifier => $classNameOrInstance) {
+            if (is_object($classNameOrInstance)) {
+                $className = get_class($classNameOrInstance);
+                $updateObject = $classNameOrInstance;
             } else {
-                $updateObject = $this->coreApi->makeInstance($className);
+                $className = (string)$classNameOrInstance;
+                if (empty($className) || !class_exists($className)) {
+                    continue;
+                }
+                if (class_exists(ObjectManager::class)) {
+                    /* @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
+                    $objectManager = $this->coreApi->makeInstance(ObjectManager::class);
+                    $updateObject = $objectManager->get($className);
+                } else {
+                    try {
+                        $updateObject = GeneralUtility::makeInstance($className);
+                    } catch (\Throwable $e) {
+                        continue;
+                    }
+                }
             }
             /** @var UpgradeWizardInterface $updateObject */
-            // Prevent exception for Update wizards, that use the deprecated \TYPO3\CMS\Install\Updates\AbstractUpdate
-            if (interface_exists(\TYPO3\CMS\Install\Updates\ChattyInterface::class)
-                && is_a($updateObject, \TYPO3\CMS\Install\Updates\ChattyInterface::class, true)) {
-                $output = new \Symfony\Component\Console\Output\NullOutput();
+            // Prevent exception for Update wizards that use the deprecated \TYPO3\CMS\Install\Updates\AbstractUpdate
+            if (interface_exists(\TYPO3\CMS\Core\Upgrades\ChattyInterface::class)
+                && $updateObject instanceof \TYPO3\CMS\Core\Upgrades\ChattyInterface) {
+                // TYPO3 >= 14
+                $output = new NullOutput();
+                $updateObject->setOutput($output);
+            } elseif (interface_exists(ChattyInterface::class) && $updateObject instanceof ChattyInterface) {
+                // TYPO3 < 14
+                $output = new NullOutput();
                 $updateObject->setOutput($output);
             }
-            $shortIdentifier = str_replace(['\\'], '', get_class($updateObject));
+            $shortIdentifier = $identifier;
             if (method_exists($updateObject, 'getIdentifier')) {
                 $shortIdentifier = $updateObject->getIdentifier();
-            } elseif (class_exists(UpgradeWizard::class)) {
-                $reflectionClass = new \ReflectionClass(get_class($updateObject));
-                $attributes = $reflectionClass->getAttributes(UpgradeWizard::class);
-                if ($attributes) {
-                    $attr = reset($attributes);
-                    $attrObject = $attr->newInstance();
-                    /** @var UpgradeWizard $attrObject */
-                    $shortIdentifier = $attrObject->identifier;
-                }
             }
             $upgradeWizardStates[$shortIdentifier] = [
                 //'wizard' => $updateObject,
+                'identifier' => $identifier,
                 'className' => $className,
                 'title' => $updateObject->getTitle(),
                 'explanation' => $updateObject->getDescription(),
                 'confirmable' => false,
                 'done' => false,
             ];
-            if ($updateObject instanceof DatabaseRowsUpdateWizard) {
+            if ($updateObject instanceof \TYPO3\CMS\Core\Upgrades\DatabaseRowsUpdateWizard) {
+                // TYPO3 >= 14
+                $upgradeWizardStates = $this->extractRowUpdaters($updateObject, $upgradeWizardStates);
+            } if ($updateObject instanceof \TYPO3\CMS\Install\Updates\DatabaseRowsUpdateWizard) {
+                // TYPO3 < 14
                 $upgradeWizardStates = $this->extractRowUpdaters($updateObject, $upgradeWizardStates);
             }
-            if ($updateObject instanceof ConfirmableInterface) {
+            if ($updateObject instanceof ConfirmableInterface || $updateObject instanceof  \TYPO3\CMS\Core\Upgrades\ConfirmableInterface) {
                 $upgradeWizardStates[$shortIdentifier]['confirmable'] = true;
             }
             try {
-                $markedAsDone = $upgradeWizardsService->isWizardDone($shortIdentifier);
+                $markedAsDone = $upgradeWizardsService->isWizardDone($identifier);
                 if ($markedAsDone || !$updateObject->updateNecessary()) {
                     $upgradeWizardStates[$shortIdentifier]['done'] = true;
                 }
@@ -185,13 +230,19 @@ class InstallTool extends AbstractReport
         return $upgradeWizardStates;
     }
 
-    private function extractRowUpdaters(DatabaseRowsUpdateWizard $rowsUpdateWizard, array $availableUpgradeWizards): array
+    /**
+     * @param \TYPO3\CMS\Core\Upgrades\DatabaseRowsUpdateWizard|\TYPO3\CMS\Install\Updates\DatabaseRowsUpdateWizard $rowsUpdateWizard
+     * @param array $availableUpgradeWizards
+     * @return array<string, array{className: string, title: string, explanation: string, done: bool}>
+     */
+    private function extractRowUpdaters(object $rowsUpdateWizard, array $availableUpgradeWizards): array
     {
+        $upgradeWizardsService = $this->getUpgradeWizardsService();
+        if (null === $upgradeWizardsService) {
+            return [];
+        }
         $protectedProperty = 'rowUpdater';
-        $availableRowUpdaters = \Closure::bind(function () use ($rowsUpdateWizard, $protectedProperty) {
-            return $rowsUpdateWizard->$protectedProperty;
-        }, null, $rowsUpdateWizard)();
-        $upgradeWizardsService = $this->coreApi->makeInstance(\TYPO3\CMS\Install\Service\UpgradeWizardsService::class);
+        $availableRowUpdaters = \Closure::bind(static fn() => $rowsUpdateWizard->$protectedProperty, null, $rowsUpdateWizard)();
         foreach ($upgradeWizardsService->listOfRowUpdatersDone() as $rowUpdatersDone) {
             $availableUpgradeWizards[$rowUpdatersDone['class']] = [
                 'className' => $rowUpdatersDone['class'],

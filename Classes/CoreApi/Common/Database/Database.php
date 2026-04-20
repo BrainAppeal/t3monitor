@@ -27,6 +27,7 @@
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Database;
 
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\SingletonInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -44,9 +45,16 @@ class Database implements DatabaseInterface, SingletonInterface
     /**
      * List of tables with table information
      *
-     * @var array
+     * @var ?array
      */
-    private $tableInfo;
+    private ?array $tableInfo = null;
+
+    private ConnectionPool $connectionPool;
+
+    public function __construct()
+    {
+        $this->connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
+    }
 
     /**
      * Find start page; If root page is shortcut, the tree is traversed
@@ -108,7 +116,7 @@ class Database implements DatabaseInterface, SingletonInterface
     public function getTablesInfo(): array
     {
         /** @var ConnectionPool $cp */
-        $cp = GeneralUtility::makeInstance(ConnectionPool::class);
+        $cp = $this->connectionPool;
         $defaultConnection = $cp->getConnectionByName(ConnectionPool::DEFAULT_CONNECTION_NAME);
         $database = $defaultConnection->getDatabase();
         $correctedTables = [];
@@ -151,7 +159,7 @@ class Database implements DatabaseInterface, SingletonInterface
         return $this->tableInfo;
     }
 
-    protected function executeFetchAll(\TYPO3\CMS\Core\Database\Query\QueryBuilder $queryBuilder)
+    protected function executeFetchAll(QueryBuilder $queryBuilder)
     {
         if (!method_exists($queryBuilder, 'executeQuery')) {
             return $queryBuilder->execute()->fetchAll();
@@ -159,7 +167,7 @@ class Database implements DatabaseInterface, SingletonInterface
         return $queryBuilder->executeQuery()->fetchAllAssociative();
     }
 
-    protected function executeFetchRow(\TYPO3\CMS\Core\Database\Query\QueryBuilder $queryBuilder)
+    protected function executeFetchRow(QueryBuilder $queryBuilder)
     {
         if (!method_exists($queryBuilder, 'executeQuery')) {
             return $queryBuilder->execute()->fetch();
@@ -180,7 +188,7 @@ class Database implements DatabaseInterface, SingletonInterface
     public function fetchRow($select, $from, $where, $orderBy = '')
     {
         /** @var ConnectionPool $connectionPool */
-        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
+        $connectionPool = $this->connectionPool;
         $queryBuilder = $connectionPool->getQueryBuilderForTable($from);
         $queryBuilder->resetRestrictions();
         $selectList = explode(', ', $select);
@@ -207,7 +215,7 @@ class Database implements DatabaseInterface, SingletonInterface
     public function fetchList($select, $from, $where, array $orderBy = [], $limit = '')
     {
         /** @var ConnectionPool $connectionPool */
-        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
+        $connectionPool = $this->connectionPool;
         $queryBuilder = $connectionPool->getQueryBuilderForTable($from);
         $queryBuilder->resetRestrictions();
         $selectFields = explode(', ', $select);
@@ -246,7 +254,7 @@ class Database implements DatabaseInterface, SingletonInterface
      */
     public function getDatabaseVariable($variableName): ?string
     {
-        $cp = GeneralUtility::makeInstance(ConnectionPool::class);
+        $cp = $this->connectionPool;
         $defaultConnection = $cp->getConnectionByName(ConnectionPool::DEFAULT_CONNECTION_NAME);
         return $defaultConnection->getServerVersion();
     }

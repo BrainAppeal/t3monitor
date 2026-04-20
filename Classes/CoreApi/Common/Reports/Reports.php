@@ -26,6 +26,7 @@
  * ************************************************************* */
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+use TYPO3\CMS\Core\Type\ContextualFeedbackSeverity;
 use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\Status;
 
 /**
@@ -42,13 +43,12 @@ class Reports
      *
      * @var array
      */
-    private $data;
+    private array $data = [];
     /**
      * Default constructor
      */
     public function __construct()
     {
-        $this->data = [];
     }
     /**
      * Adds the given report data to the data
@@ -77,7 +77,7 @@ class Reports
                 foreach($value as $sKey => $sVal){
                     $this->addRecursive($sKey, $sVal, $sData);
                 }
-            } else if ($value instanceof \TYPO3\CMS\Core\Type\ContextualFeedbackSeverity) {
+            } elseif ($value instanceof ContextualFeedbackSeverity) {
                 $data[$key] = Status::getSeverityAsInt($value);
             } else {
                 $data[$key] = $value;

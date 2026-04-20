@@ -26,6 +26,7 @@
  * ************************************************************* */
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\Status;
 
 /**
@@ -42,37 +43,37 @@ class Internal extends AbstractReport
      *
      * @param Reports $reportHandler
      */
-    public function addReports(Reports $reportHandler)
+    public function addReports(Reports $reportHandler): void
     {
-        if (\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('reports')) {
-            $internalReports = array();
-            $status = array();
-            $reportClasses = array();
-            $checkPath = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('reports') . 'Classes/Report/Status/';
+        if (ExtensionManagementUtility::isLoaded('reports')) {
+            $internalReports = [];
+            $status = [];
+            $reportClasses = [];
+            $checkPath = ExtensionManagementUtility::extPath('reports') . 'Classes/Report/Status/';
             $files = scandir($checkPath);
             foreach ($files as $file) {
-                if (strpos($file, '.php') !== false) {
+                if (str_contains($file, '.php')) {
                     $fileName = str_replace( '.php', '', $file);
                     $key = trim(strtolower(str_replace('Status', '', $fileName)));
-                    if (!empty($key)) {
+                    if ($key !== '') {
                         $reportClasses[$key][] = 'TYPO3\\CMS\\Reports\\Report\\Status\\' . $fileName;
                     }
                 }
             }
-            $checkInstallPath = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('install') . 'Classes/Report/';
+            $checkInstallPath = ExtensionManagementUtility::extPath('install') . 'Classes/Report/';
             $installFiles = scandir($checkInstallPath);
-            $mapKeys = array(
+            $mapKeys = [
                 'InstallStatusReport' => 'typo3',
                 'SecurityStatusReport' => 'security',
                 'EnvironmentStatusReport' => 'system',
-            );
+            ];
             foreach ($installFiles as $file) {
                 if (strpos($file, '.') !== 0 && strpos($file, '.php') !== false) {
                     $fileName = str_replace( '.php', '', $file);
                     if (isset($mapKeys[$fileName])) {
                         $key = $mapKeys[$fileName];
                     } else {
-                        $key = strtolower(trim(str_replace(array('Status', 'Report'), '', $fileName)));
+                        $key = strtolower(trim(str_replace(['Status', 'Report'], '', $fileName)));
                     }
                     $reportClasses[$key][] = 'TYPO3\\CMS\\Install\\Report\\' . $fileName;
                 }

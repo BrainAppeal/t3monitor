@@ -64,24 +64,24 @@ class Config implements SingletonInterface
      */
     private $showExtendedReports;
     /**
-     * Minimum timestamp were changes are checked
+     * Minimum timestamp where changes are checked
      *
      * @var integer
      */
-    private $minTstamp;
+    private $minTstamp = 0;
 
     /**
      * List of extensions to be excluded by this extension
      *
      * @var array
      */
-    private $excludeExtList;
+    private $excludeExtList = [];
 
     public function __construct()
     {
         $extConfig = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get(self::EXT_KEY);
         $this->setEncryptionKey($extConfig['encryption_key']);
-        $excludeExtList = explode(',', $extConfig['exclude_local']);
+        $excludeExtList = explode(',', trim((string)$extConfig['exclude_local']));
         $this->setExcludeExtList($excludeExtList);
     }
 
@@ -92,7 +92,7 @@ class Config implements SingletonInterface
      * @param bool $forLocalEncryption
      * @return string
      */
-    public function getEncryptionKey($forLocalEncryption = false)
+    public function getEncryptionKey(bool $forLocalEncryption = false): string
     {
         return $forLocalEncryption ? substr($this->encryptionKey, 32) : $this->encryptionKey;
     }
@@ -102,54 +102,54 @@ class Config implements SingletonInterface
      *
      * @param string $encryptionKey
      */
-    public function setEncryptionKey($encryptionKey)
+    public function setEncryptionKey(string $encryptionKey): void
     {
-        $this->encryptionKey = (string) trim($encryptionKey);
+        $this->encryptionKey = trim($encryptionKey);
     }
 
     /**
      *
-     * @return boolean
+     * @return bool
      */
-    public function getShowExtendedReports()
+    public function getShowExtendedReports(): bool
     {
         return $this->showExtendedReports;
     }
 
     /**
      *
-     * @param boolean $showExtendedReports
+     * @param bool $showExtendedReports
      */
-    public function setShowExtendedReports($showExtendedReports)
+    public function setShowExtendedReports(bool $showExtendedReports): void
     {
-        $this->showExtendedReports = (boolean) $showExtendedReports;
+        $this->showExtendedReports = $showExtendedReports;
     }
 
     /**
      *
      * @return int
      */
-    public function getMinTstamp()
+    public function getMinTstamp(): int
     {
         return $this->minTstamp;
     }
 
-    public function setMinTstamp($minTstamp)
+    public function setMinTstamp(int $minTstamp): void
     {
-        $this->minTstamp = (int) $minTstamp;
+        $this->minTstamp = $minTstamp;
     }
 
     /**
      *
      * @return array
      */
-    public function getExcludeExtList()
+    public function getExcludeExtList(): array
     {
         return $this->excludeExtList;
     }
 
-    public function setExcludeExtList($excludeExtList)
+    public function setExcludeExtList(array $excludeExtList): void
     {
-        $this->excludeExtList = (array) $excludeExtList;
+        $this->excludeExtList = $excludeExtList;
     }
 }

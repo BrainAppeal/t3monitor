@@ -27,6 +27,12 @@
 
 namespace BrainAppeal\T3monitor\CoreApi\Common\Reports;
 
+use TYPO3\CMS\Install\SystemEnvironment\Check;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\DatabaseCheck;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\SetupCheck;
+use TYPO3\CMS\Reports\StatusProviderInterface;
+use TYPO3\CMS\Reports\RequestAwareStatusProviderInterface;
+use TYPO3\CMS\Core\Routing\RouteNotFoundException;
 use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\InstallStatusReport;
 use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\SecurityStatusReport;
 use BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\Status;
@@ -46,9 +52,9 @@ class Security extends AbstractReport
     /**
      * Returns the system status reports
      *
-     * @param \BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler
+     * @param Reports $reportHandler
      */
-    public function addReports(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports $reportHandler)
+    public function addReports(Reports $reportHandler): void
     {
         $reportsInfo = $this->getReportsFromExt();
         $this->addInstallDetailedChecks($reportsInfo);
@@ -78,7 +84,7 @@ class Security extends AbstractReport
         $pageId = (int)$this->coreApi->getRootPageId();
         $reportsInfo['typo3']['StartPage'] = [
             'value' => (int)$this->coreApi->getRootPageId(),
-            'severity' => empty($pageId) ? self::ERROR : self::OK,
+            'severity' => $pageId === 0 ? self::ERROR : self::OK,
         ];
         if (empty($reportsInfo['typo3']['Typo3Version'])) {
             $reportsInfo['typo3']['Typo3Version'] = [
@@ -90,7 +96,7 @@ class Security extends AbstractReport
 
     protected function addInstallDetailedChecks(array &$reportsInfo): void
     {
-        if (class_exists(\TYPO3\CMS\Install\SystemEnvironment\Check::class)) {
+        if (class_exists(Check::class)) {
             $group = 'system';
             if (!isset($reportsInfo[$group])) {
                 $reportsInfo[$group] = [];
@@ -109,8 +115,8 @@ class Security extends AbstractReport
             }
             $reportsInfo[$group] = array_merge($reportsInfo[$group], $statusList);
             try {
-                /** @var \BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\DatabaseCheck $databaseCheck */
-                $databaseCheck = GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\DatabaseCheck::class);
+                /** @var DatabaseCheck $databaseCheck */
+                $databaseCheck = GeneralUtility::makeInstance(DatabaseCheck::class);
                 $statusList = $databaseCheck->getStatusList();
             } catch (\Throwable $e) {
                 $statusList = [
@@ -122,8 +128,8 @@ class Security extends AbstractReport
             }
             $reportsInfo[$group] = array_merge($reportsInfo[$group], $statusList);
             try {
-                /** @var \BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\SetupCheck $databaseCheck */
-                $setupCheck = GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\Common\Reports\Fallback\SetupCheck::class);
+                /** @var SetupCheck $databaseCheck */
+                $setupCheck = GeneralUtility::makeInstance(SetupCheck::class);
                 $statusList = $setupCheck->getStatusList();
             } catch (\Throwable $e) {
                 $statusList = [
@@ -211,7 +217,7 @@ class Security extends AbstractReport
             $defaultParts = GeneralUtility::trimExplode('|', $defaultFileDenyPattern, true);
             $givenParts = GeneralUtility::trimExplode('|', $fileDenyPattern, true);
             $missingParts = array_diff($defaultParts, $givenParts);
-            if (!empty($missingParts)) {
+            if ($missingParts !== []) {
                 $value = 'Insecure';
                 $severity = self::ERROR;
             }
@@ -319,7 +325,7 @@ class Security extends AbstractReport
         $reportsInfo = [];
         // TYPO3 >= 10.4
         if (!empty($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['reports']['tx_reports']['status']['providers'])
-            && interface_exists(\TYPO3\CMS\Reports\StatusProviderInterface::class)) {
+            && interface_exists(StatusProviderInterface::class)) {
             // Ensure that $GLOBALS['LANG'] is set
             $this->coreApi->getLanguageService();
             foreach ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['reports']['tx_reports']['status']['providers'] as $group => $statusProvidersList) {
@@ -327,8 +333,8 @@ class Security extends AbstractReport
                     $statusProviderInstance = null;
                     try {
                         $statusProviderInstance = $this->coreApi->makeInstance($statusProvider);
-                        if (is_a($statusProviderInstance, \TYPO3\CMS\Reports\StatusProviderInterface::class)) {
-                            if (is_a($statusProviderInstance, \TYPO3\CMS\Reports\RequestAwareStatusProviderInterface::class)
+                        if ($statusProviderInstance instanceof StatusProviderInterface) {
+                            if ($statusProviderInstance instanceof RequestAwareStatusProviderInterface
                                 && isset($GLOBALS['TYPO3_REQUEST'])) {
                                 $statusList = $statusProviderInstance->getStatus($GLOBALS['TYPO3_REQUEST']);
                             } elseif (method_exists($statusProviderInstance, 'getDetailedStatus')) {
@@ -348,7 +354,7 @@ class Security extends AbstractReport
                                 ];
                             }
                         }
-                    } catch (\TYPO3\CMS\Core\Routing\RouteNotFoundException $e) {
+                    } catch (RouteNotFoundException $e) {
                         // ignore route exceptions
                         unset($e);
                     } catch (\Throwable $e) {

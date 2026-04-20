@@ -45,21 +45,18 @@ class Encryption
 
 
     /**
-     * Encrypt given string with given $key
+     * Encrypt a given string with a given $ key
      *
      * @param string $key The key used for encryption
      * @param string $string The key used for encryption
      * @return string The encrypted string
      * */
-    public function encrypt($key, $string)
+    public function encrypt(string $key, string $string): string
     {
-        switch ($this->encryptionType) {
-            case 'openssl':
-                $encryptedStr = '01:' . $this->encryptOpenSsl($key, $string);
-                break;
-            default:
-                $encryptedStr = $this->encryptDefault($key, $string);
-                break;
+        if ($this->encryptionType === 'openssl') {
+            $encryptedStr = '01:' . $this->encryptOpenSsl($key, $string);
+        } else {
+            $encryptedStr = $this->encryptDefault($key, $string);
         }
         return $encryptedStr;
     }
@@ -71,20 +68,17 @@ class Encryption
      * @param string $encStr Encrypted string
      * @return string The decrypted string
      */
-    public function decrypt($key, $encStr)
+    public function decrypt(string $key, string $encStr): string
     {
         $encryptionType = $this->encryptionType;
         if (strpos($encStr, '01:') === 0) {
             $encStr = substr($encStr, 3);
             $encryptionType = 'openssl';
         }
-        switch ($encryptionType) {
-            case 'openssl':
-                $decryptedStr = $this->decryptOpenSsl($key, $encStr);
-                break;
-            default:
-                $decryptedStr = $this->decryptDefault($key, $encStr);
-                break;
+        if ($encryptionType === 'openssl') {
+            $decryptedStr = $this->decryptOpenSsl($key, $encStr);
+        } else {
+            $decryptedStr = $this->decryptDefault($key, $encStr);
         }
         return $decryptedStr;
     }
@@ -101,7 +95,7 @@ class Encryption
         $key = hash('sha256', substr($key, 0, 16));
         $cipher = "aes-128-cbc";
         $ivlen = openssl_cipher_iv_length($cipher);
-        if (!$ivlen) {
+        if ($ivlen === 0) {
             $ivlen = 16;
         }
         //$iv = openssl_random_pseudo_bytes($ivlen, $cstrong);
@@ -123,7 +117,7 @@ class Encryption
         $key = hash('sha256', substr($key, 0, 16));
         $cipher = "aes-128-cbc";
         $ivlen = openssl_cipher_iv_length($cipher);
-        if (!$ivlen) {
+        if ($ivlen === 0) {
             $ivlen = 16;
         }
         $iv = substr(hash('sha256', substr($key, $ivlen)), 0, $ivlen);
@@ -164,10 +158,10 @@ class Encryption
         $dcrStr = '';
         $parts = explode(':', $encStr);
         $hash = $parts[0];
-        $encData = isset($parts[1]) ? $parts[1] : '';
+        $encData = $parts[1] ?? '';
 
         $checkHash = substr(md5($key . ':' . $encData), 0, 10);
-        if ($hash == $checkHash) {
+        if ($hash === $checkHash) {
             $dcrStr = base64_decode($encData);
             $strLen = strlen($dcrStr);
             $cryptLen = strlen($key);

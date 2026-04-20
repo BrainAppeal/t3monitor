@@ -34,11 +34,11 @@ use TYPO3\CMS\Core\Http\HtmlResponse;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Main service class which creates and sends reports for this TYPO3 installation
+ * Main service class that creates and sends reports for this TYPO3 installation
  */
 class DataResponseHandler
 {
-    public function createErrorResponse(\Throwable $e)
+    public function createErrorResponse(\Throwable $e): ResponseInterface
     {
         $message = $e->getMessage();
         return new HtmlResponse($message, 403, [

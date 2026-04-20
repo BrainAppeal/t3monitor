@@ -7,7 +7,7 @@ use TYPO3\CMS\Core\SingletonInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Create instance of compatibility helper service depending on current TYPO3 version
+ * Create an instance of a compatibility helper service depending on the current TYPO3 version
  */
 class CoreApiFactory implements SingletonInterface {
 
@@ -27,7 +27,7 @@ class CoreApiFactory implements SingletonInterface {
     }
 
     /**
-     * @return \BrainAppeal\T3monitor\CoreApi\CoreApiInterface
+     * @return CoreApiInterface
      */
     public function getCoreApi(): CoreApiInterface
     {
@@ -45,6 +45,9 @@ class CoreApiFactory implements SingletonInterface {
                     break;
                 case 13:
                     $this->instance = GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\TYPO3Version13\CoreApi::class);
+                    break;
+                case 14:
+                    $this->instance = GeneralUtility::makeInstance(\BrainAppeal\T3monitor\CoreApi\TYPO3Version14\CoreApi::class);
                     break;
 
             }

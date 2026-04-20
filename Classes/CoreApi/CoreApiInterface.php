@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * t3monitor comes with ABSOLUTELY NO WARRANTY
  * See the GNU GeneralPublic License for more details.
@@ -10,7 +13,6 @@
  * @license   GPL-2 (www.gnu.org/licenses/gpl-2.0)
  * @link      https://www.t3monitor.de/
  */
-
 namespace BrainAppeal\T3monitor\CoreApi;
 
 use BrainAppeal\T3monitor\CoreApi\Common\Database\DatabaseInterface;

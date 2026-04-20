@@ -27,6 +27,10 @@
 
 namespace BrainAppeal\T3monitor\CoreApi\TYPO3Version12\Reports;
 
+use TYPO3\CMS\Reports\StatusProviderInterface;
+use TYPO3\CMS\Reports\RequestAwareStatusProviderInterface;
+use TYPO3\CMS\Core\Routing\RouteNotFoundException;
+use TYPO3\CMS\Reports\Status;
 use BrainAppeal\T3monitor\Registry\StatusRegistry;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -47,7 +51,7 @@ class Security extends \BrainAppeal\T3monitor\CoreApi\Common\Reports\Security
     protected function getReportsFromExt(): array
     {
         $reportsInfo = [];
-        if (!interface_exists(\TYPO3\CMS\Reports\StatusProviderInterface::class)) {
+        if (!interface_exists(StatusProviderInterface::class)) {
             return $reportsInfo;
         }
         $container = GeneralUtility::getContainer();
@@ -58,7 +62,7 @@ class Security extends \BrainAppeal\T3monitor\CoreApi\Common\Reports\Security
             $statusProvidersList = $statusRegistry->getProviders();
             foreach ($statusProvidersList as $statusProviderInstance) {
                 try {
-                    if (is_a($statusProviderInstance, \TYPO3\CMS\Reports\RequestAwareStatusProviderInterface::class)
+                    if ($statusProviderInstance instanceof RequestAwareStatusProviderInterface
                         && isset($GLOBALS['TYPO3_REQUEST'])) {
                         $statusList = $statusProviderInstance->getStatus($GLOBALS['TYPO3_REQUEST']);
                     } elseif (method_exists($statusProviderInstance, 'getDetailedStatus')) {
@@ -67,7 +71,7 @@ class Security extends \BrainAppeal\T3monitor\CoreApi\Common\Reports\Security
                         $statusList = $statusProviderInstance->getStatus();
                     }
                     foreach ($statusList as $sKey => $sObj) {
-                        /** @var \TYPO3\CMS\Reports\Status $sObj */
+                        /** @var Status $sObj */
                         $value = $sObj->getValue();
                         if ($value && is_scalar($value) && strlen($value) > 5000) {
                             $value = substr($value, 0, 5000);
@@ -78,7 +82,7 @@ class Security extends \BrainAppeal\T3monitor\CoreApi\Common\Reports\Security
                             'message' => $sObj->getMessage(),
                         ];
                     }
-                } catch (\TYPO3\CMS\Core\Routing\RouteNotFoundException $e) {
+                } catch (RouteNotFoundException $e) {
                     // ignore route exceptions
                     unset($e);
                 } catch (\Throwable $e) {

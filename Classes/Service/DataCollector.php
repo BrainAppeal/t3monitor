@@ -27,6 +27,7 @@
 
 namespace BrainAppeal\T3monitor\Service;
 
+use BrainAppeal\T3monitor\Helper\Timer;
 use BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports;
 use BrainAppeal\T3monitor\CoreApi\CoreApiFactory;
 use BrainAppeal\T3monitor\Exception\IncorrectConfigurationException;
@@ -127,7 +128,7 @@ class DataCollector
         }
 
         // PARSE TIME BEGIN
-        $timer = new \BrainAppeal\T3monitor\Helper\Timer();
+        $timer = new Timer();
         $timer->start('main');
         // write Logfile
         if (null !== $this->logger) {
@@ -152,7 +153,7 @@ class DataCollector
             }
             $timer->stop($key);
         }
-        if (!empty($exceptions)) {
+        if ($exceptions !== []) {
             $reportHandler->add('exceptions', $exceptions);
         }
         $siteName = $GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'];
@@ -179,7 +180,7 @@ class DataCollector
         if (strlen($encryptionKey) !== 64) {
             $msg = 'ERROR: The encryption key is not configured or has the wrong format';
             $isValid = false;
-        } elseif (empty($key) || strlen($key) < 16){
+        } elseif ($key === '' || strlen($key) < 16){
             $msg = 'ERROR: The secret key in the request is missing';
             $isValid = false;
         } elseif (strlen($key) <= 32 && strpos($encryptionKey, $key) !== 0){
@@ -190,7 +191,7 @@ class DataCollector
             if (null !== $this->logger) {
                 $this->logger->error($msg);
             }
-            throw new IncorrectConfigurationException($msg);
+            throw new IncorrectConfigurationException($msg, 9616084085);
         }
     }
 }

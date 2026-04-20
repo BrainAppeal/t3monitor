@@ -41,14 +41,14 @@ class Database extends AbstractReport
      *
      * @param Reports $reportHandler
      */
-    public function addReports(Reports $reportHandler)
+    public function addReports(Reports $reportHandler): void
     {
         $dbInfo = [];
         $db = $this->coreApi->getDatabase();
         $tables = $db->getTablesInfo();
         $collations = [];
         foreach($tables as $table => $tInfo){
-            $collation = strtolower($tInfo['collation']);
+            $collation = strtolower((string) $tInfo['collation']);
             $dbInfo[$table] = $tInfo;
             if (!array_key_exists('rows', $dbInfo[$table])) {
                 $dbInfo[$table]['rows'] = 0;

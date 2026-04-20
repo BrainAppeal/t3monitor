@@ -16,6 +16,15 @@ namespace BrainAppeal\T3monitor\CoreApi;
 
 use BrainAppeal\T3monitor\CoreApi\Common\Database\Database;
 use BrainAppeal\T3monitor\CoreApi\Common\Database\DatabaseInterface;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Applications;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Disc;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Extension;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\InstallTool;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Internal;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Links;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Security;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\Server;
+use BrainAppeal\T3monitor\CoreApi\Common\Reports\SysLog;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Http\NormalizedParams;
@@ -26,7 +35,6 @@ use TYPO3\CMS\Core\Site\Entity\NullSite;
 use TYPO3\CMS\Core\Site\Entity\SiteInterface;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Utility\VersionNumberUtility;
 
 abstract class AbstractCoreApi implements CoreApiInterface {
 
@@ -41,19 +49,8 @@ abstract class AbstractCoreApi implements CoreApiInterface {
     public function getDatabase(): DatabaseInterface
     {
         /** @var Database $instance */
-        $instance = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(Database::class);
+        $instance = GeneralUtility::makeInstance(Database::class);
         return $instance;
-    }
-
-    /**
-     * Returns an integer from a three part version number, eg '4.12.3' -> 4012003
-     *
-     * @param string $versionNumber Version number on format x.x.x
-     * @return int Integer version of version number (where each part can count to 999)
-     */
-    public function convertVersionNumberToInteger(string $versionNumber): int
-    {
-        return VersionNumberUtility::convertVersionNumberToInteger($versionNumber);
     }
 
     /**
@@ -93,7 +90,7 @@ abstract class AbstractCoreApi implements CoreApiInterface {
 
     /**
      * PATH_site is deprecated in TYPO3 v10
-     * => Use :php:`Environment::getPublicPath() . '/'` instead
+     * => Use :php:`Environment::getPublicPath(). '/'` instead
      * @return string
      */
     public function getPublicPath(): string
@@ -118,16 +115,16 @@ abstract class AbstractCoreApi implements CoreApiInterface {
     protected function getAvailableReportsClassMap(): array
     {
         return [
-            'internal' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\Internal::class,
-            'security' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\Security::class,
-            'installed_extensions' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\Extension::class,
+            'internal' => Internal::class,
+            'security' => Security::class,
+            'installed_extensions' => Extension::class,
             'database' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\Database::class,
-            'sys_log' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\SysLog::class,
-            'system' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\Server::class,
-            'disc' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\Disc::class,
-            'links' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\Links::class,
-            'applications' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\Applications::class,
-            'install_tool' => \BrainAppeal\T3monitor\CoreApi\Common\Reports\InstallTool::class,
+            'sys_log' => SysLog::class,
+            'system' => Server::class,
+            'disc' => Disc::class,
+            'links' => Links::class,
+            'applications' => Applications::class,
+            'install_tool' => InstallTool::class,
         ];
     }
 
@@ -151,7 +148,7 @@ abstract class AbstractCoreApi implements CoreApiInterface {
             if ($params['reports'] === 'all') {
                 $enabledReports = array_keys($availableReports);
             } else {
-                $enabledReports = explode(',', trim(strip_tags($params['reports'])));
+                $enabledReports = explode(',', trim(strip_tags((string) $params['reports'])));
             }
         }
         $reportInstances = [];
@@ -172,7 +169,7 @@ abstract class AbstractCoreApi implements CoreApiInterface {
         if (null === $this->rootPageId) {
             $site = $this->getSite();
             $rootPageId = $site->getRootPageId();
-            if (!$rootPageId) {
+            if ($rootPageId === 0) {
                 $db = $this->getDatabase();
                 $startRow = $db->getStartPage();
                 if (!empty($startRow)) {

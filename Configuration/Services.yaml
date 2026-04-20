@@ -20,6 +20,18 @@ services:
   BrainAppeal\T3monitor\CoreApi\CoreApiFactory:
     public: true
 
+  BrainAppeal\T3monitor\CoreApi\TYPO3Version13\CoreApi:
+    public: true
+    calls:
+      - setPageInformationFactory: ['@?TYPO3\CMS\Frontend\Page\PageInformationFactory']
+      - setFrontendTypoScriptFactory: ['@?TYPO3\CMS\Core\TypoScript\FrontendTypoScriptFactory']
+
+  BrainAppeal\T3monitor\CoreApi\TYPO3Version14\CoreApi:
+    public: true
+    calls:
+      - setPageInformationFactory: ['@?TYPO3\CMS\Frontend\Page\PageInformationFactory']
+      - setFrontendTypoScriptFactory: ['@?TYPO3\CMS\Core\TypoScript\FrontendTypoScriptFactory']
+
   BrainAppeal\T3monitor\Registry\StatusRegistry:
     public: true
     calls:

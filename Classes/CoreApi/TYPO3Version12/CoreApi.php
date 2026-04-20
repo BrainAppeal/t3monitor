@@ -2,6 +2,7 @@
 
 namespace BrainAppeal\T3monitor\CoreApi\TYPO3Version12;
 
+use TYPO3\CMS\Install\Service\UpgradeWizardsService;
 use BrainAppeal\T3monitor\CoreApi\AbstractCoreApi;
 use BrainAppeal\T3monitor\CoreApi\TYPO3Version12\Reports\Security;
 use Psr\Http\Message\ServerRequestInterface;
@@ -33,8 +34,8 @@ class CoreApi extends AbstractCoreApi
      */
     public function makeInstance(string $className, ...$constructorArguments): object
     {
-        if ($className === InstallStatusReport::class) {
-            $upgradeWizardsService = GeneralUtility::makeInstance(\TYPO3\CMS\Install\Service\UpgradeWizardsService::class);
+        if ($className === InstallStatusReport::class && class_exists(UpgradeWizardsService::class)) {
+            $upgradeWizardsService = GeneralUtility::makeInstance(UpgradeWizardsService::class);
             return GeneralUtility::makeInstance($className, $upgradeWizardsService);
         }
         return GeneralUtility::makeInstance($className, ...$constructorArguments);

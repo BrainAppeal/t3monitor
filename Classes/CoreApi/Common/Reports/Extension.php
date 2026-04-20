@@ -46,10 +46,12 @@ class Extension extends AbstractReport
             /* @var \TYPO3\CMS\Extensionmanager\Utility\ListUtility $listUtility */
             $listUtility = $objectManager->get(\TYPO3\CMS\Extensionmanager\Utility\ListUtility::class);
             $extensions = $listUtility->getAvailableAndInstalledExtensionsWithAdditionalInformation();
-        } else {
+        } elseif (class_exists(\TYPO3\CMS\Extensionmanager\Utility\ListUtility::class)) {
             /* @var \TYPO3\CMS\Extensionmanager\Utility\ListUtility $listUtility */
             $listUtility = $this->coreApi->makeInstance(\TYPO3\CMS\Extensionmanager\Utility\ListUtility::class);
             $extensions = $listUtility->getAvailableAndInstalledExtensionsWithAdditionalInformation();
+        } else {
+            $extensions = [];
         }
         return $extensions;
     }
@@ -60,7 +62,7 @@ class Extension extends AbstractReport
      * @param Reports $reportHandler
      * @throws \Throwable
      */
-    public function addReports(Reports $reportHandler)
+    public function addReports(Reports $reportHandler): void
     {
         $loadedExtensions = [];
         $packageManager = $this->coreApi->makeInstance(PackageManager::class);
@@ -93,7 +95,7 @@ class Extension extends AbstractReport
         $excludeList = $config->getExcludeExtList();
         $noExcludes = empty($excludeList);
 
-        $extOutput = array();
+        $extOutput = [];
         foreach (array_keys($extensions) as $extKey) {
             // Only add info for local extension; skip all extensions in exclude list
             if (array_key_exists($extKey, $loadedExtensions)
@@ -113,7 +115,7 @@ class Extension extends AbstractReport
                 $extReport['installedBy'] = $this->findUserWhoInstalledExtension($absExtPath);
                 $extReport['composer'] = $extData['composer'] ?? [];
                 $this->removeEmptyKeys($extReport['constraints']);
-                $iconFile = self::getExtensionIcon($absExtPath, false);
+                $iconFile = $this->getExtensionIcon($absExtPath, false);
                 $extReport['icon_file'] = $iconFile;
                 // set name of log file if it exists;
                 // Required to create a link to the manual for custom extensions that are not in the TER
@@ -145,7 +147,7 @@ class Extension extends AbstractReport
      * @param bool $returnFullPath Return full path of file.
      * @see \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::getExtensionIcon
      */
-    private static function getExtensionIcon(string $extensionPath, bool $returnFullPath = false): string
+    private function getExtensionIcon(string $extensionPath, bool $returnFullPath = false): string
     {
         $icon = '';
         // @deprecated In v13 remove the boolean array value and use the file location string as value again
@@ -157,7 +159,7 @@ class Extension extends AbstractReport
             'ext_icon.png' => true,
             'ext_icon.gif' => true,
         ];
-        foreach ($locationsToCheckFor as $fileLocation => $legacyLocation) {
+        foreach (array_keys($locationsToCheckFor) as $fileLocation) {
             if (file_exists($extensionPath . $fileLocation)) {
                 $icon = $fileLocation;
                 break;
@@ -195,7 +197,7 @@ class Extension extends AbstractReport
                 $loggedIn = (int) $row['action'] === 1;
                 $userList[$userId] = $loggedIn;
             }
-            $beUsers = array();
+            $beUsers = [];
             $userCount = count($userList);
             if ($userCount > 0) {
                 $userIds = array_keys($userList);
@@ -205,7 +207,9 @@ class Extension extends AbstractReport
                 $beUsers = $db->fetchList($select, $from, $where, ['uid' => 'ASC']);
             }
             foreach ($beUsers as $userRow) {
-                if (!empty($userName)) $userName .= ' OR ';
+                if ($userName !== '') {
+                    $userName .= ' OR ';
+                }
                 $userName .= $userRow['username'];
             }
         }

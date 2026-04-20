@@ -42,11 +42,11 @@ class Applications extends AbstractReport
      *
      * @param Reports $reportHandler
      */
-    public function addReports(Reports $reportHandler)
+    public function addReports(Reports $reportHandler): void
     {
-        $info = array();
+        $info = [];
         $cmsPublicPath = Environment::getPublicPath() . '/';
-        $checkApps = array(
+        $checkApps = [
             'piwik' => [
                 'check_files' => [
                     $cmsPublicPath . 'piwik/core/Version.php',
@@ -61,7 +61,7 @@ class Applications extends AbstractReport
                 ],
                 'pattern' => '/const VERSION\s*=\s*\'([^\']+)\';/',
             ],
-        );
+        ];
         foreach ($checkApps as $app => $appConfig) {
             $checkFiles = $appConfig['check_files'];
             foreach ($checkFiles as $vFile) {
