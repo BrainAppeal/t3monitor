@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 2.2.1 (2026-05-19)
+
+- [BUGFIX] fix frontend.typoscript initialization in TYPO3 13.4
+
 ## 2.2.0 (2026-04-20)
 
 - [FEATURE] add TYPO3 14.3 LTS compatibility

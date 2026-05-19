@@ -75,24 +75,25 @@ class CoreApi extends CoreApiV12
         $context = GeneralUtility::makeInstance(Context::class);
         $context->setAspect('frontend.preview', new PreviewAspect());
         $cacheInstruction = $originalRequest->getAttribute('frontend.cache.instruction', new CacheInstruction());
-        $originalRequest = $originalRequest->withAttribute('frontend.cache.instruction', $cacheInstruction);
-        $queryParamsFromRequest = $originalRequest->getQueryParams();
+        $request = $originalRequest->withAttribute('frontend.cache.instruction', $cacheInstruction);
+        $request = $request->withAttribute('site', $site);
+        $queryParamsFromRequest = $request->getQueryParams();
         $mergedQueryParams = array_merge($queryParams, $queryParamsFromRequest);
-        $originalRequest = $originalRequest->withQueryParams($mergedQueryParams);
+        $request = $request->withQueryParams($mergedQueryParams);
         $pageArguments = new PageArguments($site->getRootPageId(), '0', []);
-        $originalRequest = $originalRequest->withAttribute('routing', $pageArguments);
-        $pageInformation = $this->pageInformationFactory->create($originalRequest);
-        $originalRequest = $originalRequest->withAttribute('frontend.page.information', $pageInformation);
-        $expressionMatcherVariables = $this->getExpressionMatcherVariables($site, $originalRequest);
-        $this->initializePageRenderer($originalRequest, $expressionMatcherVariables);
+        $request = $request->withAttribute('routing', $pageArguments);
+        $pageInformation = $this->pageInformationFactory->create($request);
+        $request = $request->withAttribute('frontend.page.information', $pageInformation);
+        $expressionMatcherVariables = $this->getExpressionMatcherVariables($site, $request);
+        $this->initializePageRenderer($request, $expressionMatcherVariables);
         $frontendTypoScript = $this->frontendTypoScriptFactory->createSettingsAndSetupConditions(
             $site,
             $pageInformation->getSysTemplateRows(),
-            // $originalRequest does not contain site ...
+            // $request does not contain site ...
             $expressionMatcherVariables,
             null
         );
-        // Note, that we need the full TypoScript setup array, which is required for links created by
+        // Note that we need the full TypoScript setup array, which is required for links created by
         // DatabaseRecordLinkBuilder.
         $frontendTypoScript = $this->frontendTypoScriptFactory->createSetupConfigOrFullSetup(
             true,
@@ -104,14 +105,19 @@ class CoreApi extends CoreApiV12
             null,
             null
         );
-        return $originalRequest->withAttribute('frontend.typoscript', $frontendTypoScript);
+        return $request->withAttribute('frontend.typoscript', $frontendTypoScript);
     }
 
     protected function initializePageRenderer(ServerRequestInterface $request, array &$expressionMatcherVariables): void
     {
         $controller = GeneralUtility::makeInstance(TypoScriptFrontendController::class);
-        $controller->initializePageRenderer($request);
-        $expressionMatcherVariables['tsfe'] = $controller;
+        if ($controller instanceof TypoScriptFrontendController) {
+            $controller->initializePageRenderer($request);
+            $site = $request->getAttribute('site');
+            /** @var SiteInterface $site */
+            $controller->id = $site->getRootPageId();
+            $expressionMatcherVariables['tsfe'] = $controller;
+        }
     }
 
     protected function getExpressionMatcherVariables(SiteInterface $site, ServerRequestInterface $request): array
