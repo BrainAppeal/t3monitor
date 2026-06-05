@@ -56,7 +56,7 @@ class Security extends \BrainAppeal\T3monitor\CoreApi\Common\Reports\Security
         }
         $container = GeneralUtility::getContainer();
         if ($container->has(StatusRegistry::class)) {
-            $this->coreApi->getLanguageService();
+            $languageService = $this->coreApi->getLanguageService();
             /** @var StatusRegistry $statusRegistry */
             $statusRegistry = $container->get(StatusRegistry::class);
             $statusProvidersList = $statusRegistry->getProviders();
@@ -70,13 +70,17 @@ class Security extends \BrainAppeal\T3monitor\CoreApi\Common\Reports\Security
                     } else {
                         $statusList = $statusProviderInstance->getStatus();
                     }
+                    $label = $statusProviderInstance->getLabel();
+                    if ($label && strpos($label, 'LLL:') === 0) {
+                        $label = $languageService->sL($label);
+                    }
                     foreach ($statusList as $sKey => $sObj) {
                         /** @var Status $sObj */
                         $value = $sObj->getValue();
                         if ($value && is_scalar($value) && strlen($value) > 5000) {
                             $value = substr($value, 0, 5000);
                         }
-                        $reportsInfo[$statusProviderInstance->getLabel()][$sKey] = [
+                        $reportsInfo[$label][$sKey] = [
                             'value' => $value,
                             'severity' => $sObj->getSeverity()->value,
                             'message' => $sObj->getMessage(),

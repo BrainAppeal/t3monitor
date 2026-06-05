@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 2.2.2 (2026-06-05)
+
+- [TASK] translate report labels instead of returning the label key
+- [BUGFIX] fix domain check for multi site configurations
+
 ## 2.2.1 (2026-05-19)
 
 - [BUGFIX] fix frontend.typoscript initialization in TYPO3 13.4

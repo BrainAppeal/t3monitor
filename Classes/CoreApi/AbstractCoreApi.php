@@ -206,7 +206,7 @@ abstract class AbstractCoreApi implements CoreApiInterface {
                 $site = reset($sites);
                 if (count($sites) > 1) {
                     foreach ($sites as $checkSite) {
-                        if ($site->getBase()->getHost() === $httpHost) {
+                        if ($checkSite->getBase()->getHost() === $httpHost) {
                             $site = $checkSite;
                         }
                     }
