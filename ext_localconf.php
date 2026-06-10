@@ -9,3 +9,8 @@ if (!defined('TYPO3') && !defined('TYPO3_MODE')) {
 $GLOBALS['TYPO3_CONF_VARS']['FE']['eID_include']['t3monitor'] = Dispatcher::class . '::processRequest';
 
 $GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = '^t3monitor';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = '^secret';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = '^reports';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = '^last_check';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = '^extended';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = '^only_check';

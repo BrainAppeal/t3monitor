@@ -27,11 +27,11 @@
 
 namespace BrainAppeal\T3monitor\Service;
 
-use BrainAppeal\T3monitor\Helper\Timer;
 use BrainAppeal\T3monitor\CoreApi\Common\Reports\Reports;
 use BrainAppeal\T3monitor\CoreApi\CoreApiFactory;
 use BrainAppeal\T3monitor\Exception\IncorrectConfigurationException;
 use BrainAppeal\T3monitor\Helper\Config;
+use BrainAppeal\T3monitor\Helper\Timer;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
@@ -40,7 +40,7 @@ use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExis
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Main service class which creates and sends reports for this TYPO3 installation
+ * Main service class that creates and sends reports for this TYPO3 installation
  */
 class DataCollector
 {
@@ -92,18 +92,53 @@ class DataCollector
      */
     private function collect(ServerRequestInterface $request): array
     {
-        $params = $request->getQueryParams();
-        $secret = $params['secret'] ?? '';
-        $this->assertValidKeys($secret);
+        $params = $this->getRequestParams($request);
+        $this->assertValidKeys($params['secret']);
 
-        $showExtendedReports = isset($params['extended']) && $params['extended'];
-        // Timestamp of last check
-        $lastCheck = isset($params['last_check']) ? (int) $params['last_check'] : 0;
-        $this->config->setShowExtendedReports($showExtendedReports);
-        $this->config->setMinTstamp($lastCheck);
+        $this->config->setShowExtendedReports($params['extended']);
+        $this->config->setMinTstamp($params['last_check']);
 
         $this->initialize($request);
         return $this->generateData($params);
+    }
+
+    /**
+     * Returns the monitor request parameters.
+     *
+     * For POST requests, identified by the "X-T3monitor" header, the parameters
+     * are read from the request body (parsed body or a JSON payload), otherwise
+     * they are read from the query string as before.
+     *
+     * @param ServerRequestInterface $request the current request object
+     * @return array
+     */
+    private function getRequestParams(ServerRequestInterface $request): array
+    {
+        if ($request->getMethod() === 'POST') {
+            $params = $request->getParsedBody();
+            if (!is_array($params) || $params === []) {
+                $body = (string)$request->getBody();
+                if ($body !== '') {
+                    $decoded = json_decode($body, true);
+                    if (is_array($decoded)) {
+                        $params = $decoded;
+                    }
+                }
+            }
+        } else {
+            $params = $request->getQueryParams();
+        }
+        if (!is_array($params)) {
+            $params = [];
+        }
+
+        return [
+            'secret' => (string)($params['secret'] ?? ''),
+            'extended' => (bool)($params['extended'] ?? false),
+            'last_check' => (int)($params['last_check'] ?? 0),
+            'only_check' => (bool)($params['only_check'] ?? false),
+            'reports' => (string)($params['reports'] ?? ''),
+        ];
     }
 
     /**
@@ -120,10 +155,9 @@ class DataCollector
     /**
      * Runs the dispatcher and sends the encrypted report data
      */
-    private function generateData(array $params)
+    private function generateData(array $params): ?array
     {
-        $onlyCheckAccess = isset($params['only_check']) && $params['only_check'];
-        if($onlyCheckAccess){
+        if ($params['only_check']) {
             die('OK');
         }
 
@@ -131,7 +165,7 @@ class DataCollector
         $timer = new Timer();
         $timer->start('main');
         // write Logfile
-        if (null !== $this->logger) {
+        if ($this->logger !== null) {
             $this->logger->info(sprintf('TYPO3 Monitor called by IP: %s', $_SERVER['REMOTE_ADDR']));
         }
 
@@ -140,7 +174,7 @@ class DataCollector
         $reportInstances = $coreApi->getReportInstances($params);
         $reportHandler = new Reports();
         $exceptions = [];
-        foreach($reportInstances as $key => $reportObj){
+        foreach ($reportInstances as $key => $reportObj) {
             $timer->start($key);
             try {
                 $reportObj->addReports($reportHandler);
@@ -167,7 +201,7 @@ class DataCollector
     /**
      * Confirms that a valid secret and encryption key are configured and the
      * correct secret key is set in the request;
-     * If not the dispatcher is stopped immediately and an error message is send
+     * If not, the dispatcher is stopped immediately and an error message is sent
      *
      * @param string $key The required secret key
      * @throws IncorrectConfigurationException
@@ -180,14 +214,14 @@ class DataCollector
         if (strlen($encryptionKey) !== 64) {
             $msg = 'ERROR: The encryption key is not configured or has the wrong format';
             $isValid = false;
-        } elseif ($key === '' || strlen($key) < 16){
+        } elseif ($key === '' || strlen($key) < 16) {
             $msg = 'ERROR: The secret key in the request is missing';
             $isValid = false;
-        } elseif (strlen($key) <= 32 && strpos($encryptionKey, $key) !== 0){
+        } elseif (strlen($key) <= 32 && strpos($encryptionKey, $key) !== 0) {
             $msg = 'ERROR: The secret key in the request is wrong';
             $isValid = false;
         }
-        if (!$isValid){
+        if (!$isValid) {
             if (null !== $this->logger) {
                 $this->logger->error($msg);
             }

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace BrainAppeal\T3monitor\Middleware;
@@ -16,7 +17,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 class FetchMonitorData implements MiddlewareInterface
 {
     /**
-     *
      * @param ServerRequestInterface $request
      * @param RequestHandlerInterface $handler
      * @return ResponseInterface
@@ -24,7 +24,10 @@ class FetchMonitorData implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $queryParams = $request->getQueryParams();
-        if ($request->getUri()->getPath() === '/t3monitor' || ($queryParams !== [] && isset($queryParams['t3monitor']))) {
+        if (($queryParams !== [] && isset($queryParams['t3monitor']))
+            || $request->getHeaderLine('X-T3monitor') === '1'
+            || $request->getUri()->getPath() === '/t3monitor'
+        ) {
             // Remove any output produced until now
             ob_clean();
             /** @var DataCollector $dataCollector */

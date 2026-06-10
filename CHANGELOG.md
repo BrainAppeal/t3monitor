@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 2.2.3 (2026-06-10)
+
+- [BUGFIX] add T3Monitor query parameters to `[FE][cacheHash][excludedParameters]` in order to prevent caching of status report pages with T3Monitor query parameters
+- [TASK] add support for fecthing report data via POST request
+
 ## 2.2.2 (2026-06-05)
 
 - [TASK] translate report labels instead of returning the label key

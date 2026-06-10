@@ -144,12 +144,11 @@ abstract class AbstractCoreApi implements CoreApiInterface {
     final protected function createReportInstances(array $availableReports, array $params): array
     {
         $enabledReports = [];
-        if(isset($params['reports'])) {
-            if ($params['reports'] === 'all') {
-                $enabledReports = array_keys($availableReports);
-            } else {
-                $enabledReports = explode(',', trim(strip_tags((string) $params['reports'])));
-            }
+        $reports = (string)($params['reports'] ?? '');
+        if ($reports === 'all') {
+            $enabledReports = array_keys($availableReports);
+        } elseif ($reports !== '') {
+            $enabledReports = explode(',', trim(strip_tags($reports)));
         }
         $reportInstances = [];
         foreach($availableReports as $key => $className){

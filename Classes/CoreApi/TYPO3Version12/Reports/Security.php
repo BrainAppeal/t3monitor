@@ -82,6 +82,7 @@ class Security extends \BrainAppeal\T3monitor\CoreApi\Common\Reports\Security
                         }
                         $reportsInfo[$label][$sKey] = [
                             'value' => $value,
+                            'title' => $sObj->getTitle(),
                             'severity' => $sObj->getSeverity()->value,
                             'message' => $sObj->getMessage(),
                         ];
